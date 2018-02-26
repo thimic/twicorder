@@ -1,0 +1,44 @@
+
+save_dir: "~/Dropbox/Projects/SMC/SleepingGiants"
+save_prefix: "slpng_giants_"
+save_postfix: ".txt"
+
+tweets_per_file: 100
+
+config_reload_interval: 15
+
+keywords:
+  - "@slpng_giants"
+  - "@slpng_giants_oz"
+  - "@slpng_giants_be"
+  - "@slpng_giants_br"
+  - "@slpng_giants_ca"
+  - "@slpng_giants_eu"
+  - "@slpng_giants_fr"
+  - "@slpng_giants_de"
+  - "@slpng_giants_it"
+  - "@slpng_giants_nl"
+  - "@slpng_giants_nz"
+  - "@slpng_giants_no"
+  - "@slpng_giants_es"
+  - "@slpng_giants_se"
+  - "@slpng_giants_ch"
+  - "@slpng_giants_uk"
+
+follow:
+  - "799047255378391040"
+  - "896166389332848640"
+  - "824680809009405952"
+  - "833476151884410880"
+  - "833943889362898949"
+  - "805080175876722688"
+  - "823203148949061633"
+  - "819610854916288518"
+  - "835892051338219520"
+  - "828671523154227200"
+  - "824214697926766592"
+  - "821983380841627650"
+  - "837190374447808512"
+  - "861235734585409536"
+  - "814465534737731584"
+  - "823210782695587845"
