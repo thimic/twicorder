@@ -33,4 +33,4 @@ follow_also_tracks: True
 
 full_user_mentions: True
 
-user_lookup_interval: 1
+user_lookup_interval: 15

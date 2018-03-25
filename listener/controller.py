@@ -38,10 +38,13 @@ class TwitterListener(StreamListener):
         )
         now = datetime.now()
         now_local = now.astimezone(this_tz)
+        to_pop = []
         for handle, user in self._users.items():
             timestamp = datetime.strptime(user['recorded_at'], TW_TIME_FORMAT)
             if now_local - timestamp > cull_time:
-                self._users.pop(handle)
+                to_pop.append(handle)
+        for pop in to_pop:
+            self._users.pop(pop)
         return self._users
 
     @property
