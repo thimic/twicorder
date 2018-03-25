@@ -7,23 +7,9 @@ tweets_per_file: 100
 
 config_reload_interval: 15
 
-keywords:
-  - "@slpng_giants"
-  - "@slpng_giants_oz"
-  - "@slpng_giants_be"
-  - "@slpng_giants_br"
-  - "@slpng_giants_ca"
-  - "@slpng_giants_eu"
-  - "@slpng_giants_fr"
-  - "@slpng_giants_de"
-  - "@slpng_giants_it"
-  - "@slpng_giants_nl"
-  - "@slpng_giants_nz"
-  - "@slpng_giants_no"
-  - "@slpng_giants_es"
-  - "@slpng_giants_se"
-  - "@slpng_giants_ch"
-  - "@slpng_giants_uk"
+track:
+  -
+
 
 follow:
   - "799047255378391040"
@@ -42,3 +28,9 @@ follow:
   - "861235734585409536"
   - "814465534737731584"
   - "823210782695587845"
+
+follow_also_tracks: True
+
+full_user_mentions: True
+
+user_lookup_interval: 1
