@@ -103,12 +103,13 @@ class TwitterListener(StreamListener):
     def on_data(self, json_data):
         file_path = os.path.join(self.save_dir, self.file_name)
         data = json.loads(json_data)
-        users = utils.find_key('user', data)
-        for user in users:
-            user['recorded_at'] = data['created_at']
-            self.users[user['id_str']] = user
-        if self.config.get('full_user_mentions', False):
-            self.update_mentions(data)
+        if data.get('created_at'):
+            users = utils.find_key('user', data)
+            for user in users:
+                user['recorded_at'] = data['created_at']
+                self.users[user['id_str']] = user
+            if self.config.get('full_user_mentions', False):
+                self.update_mentions(data)
         self._data.append(data)
         with open(file_path, 'a') as stream:
             stream.write(json.dumps(data) + '\n')

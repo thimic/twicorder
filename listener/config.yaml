@@ -1,16 +1,20 @@
 
+# Save location, file name and extension for collected data
 save_dir: "~/Dropbox/Projects/SMC/SleepingGiants"
 save_prefix: "slpng_giants_"
 save_postfix: ".txt"
 
+# Amount of tweets to store per file
 tweets_per_file: 100
 
+# How often this config will be reloaded by the listener (minutes)
 config_reload_interval: 15
 
+# Keywords to track in tweets
 track:
   -
 
-
+# User IDs to follow
 follow:
   - "799047255378391040"
   - "896166389332848640"
@@ -29,8 +33,12 @@ follow:
   - "814465534737731584"
   - "823210782695587845"
 
+# Automatically track all screen names derived from the follow section
 follow_also_tracks: True
 
+# For every tweet with mentions, look up each mention's full user data
 full_user_mentions: True
 
+# When performing user lookups, cache the user and don't check again for this
+# interval (minutes)
 user_lookup_interval: 15
