@@ -104,3 +104,7 @@ ENV/
 .idea
 
 auth.yaml
+
+# File system
+.DS_Store
+thumbs.db
