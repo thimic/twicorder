@@ -4,26 +4,26 @@
 import time
 import traceback
 
-from listener import utils
-from listener.auth import get_auth_handler
-from listener.controller import TwitterListener, TwitterStream
+from twicorder import utils
+from twicorder.auth import get_auth_handler
+from twicorder.controller import TwicorderListener, TwicorderStream
 from tweepy.error import TweepError
 
 
 def start_daemon():
     """
-    Starting Listener Daemon.
+    Starting Twicorder Daemon.
     """
     while True:
         try:
             auth = get_auth_handler()
-            listener = TwitterListener(auth=auth)
-            twitter_stream = TwitterStream(auth, listener)
+            listener = TwicorderListener(auth=auth)
+            twitter_stream = TwicorderStream(auth, listener)
         except Exception as error:
             msg = [traceback.format_exc()]
             if isinstance(error, TweepError):
                 msg.append(error.reason)
-            msg.append('An error occurred. Restarting listener...')
+            msg.append('An error occurred. Restarting Twicorder...')
             utils.message(body='\n\n'.join(msg))
             time.sleep(2)
 

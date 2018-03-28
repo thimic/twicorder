@@ -11,13 +11,13 @@ from tweepy import Stream
 from tweepy.api import API
 from tweepy.streaming import StreamListener
 
-from listener import utils
-from listener.auth import get_auth_handler
-from listener.config import Config
-from listener.constants import TW_TIME_FORMAT
+from twicorder import utils
+from twicorder.auth import get_auth_handler
+from twicorder.config import Config
+from twicorder.constants import TW_TIME_FORMAT
 
 
-class TwitterListener(StreamListener):
+class TwicorderListener(StreamListener):
 
     def __init__(self, auth=None, api=None):
         self.api = api or API(auth)
@@ -132,10 +132,10 @@ class TwitterListener(StreamListener):
         return True
 
 
-class TwitterStream(Stream):
+class TwicorderStream(Stream):
 
     def __init__(self, auth, listener, **options):
-        super(TwitterStream, self).__init__(auth, listener, **options)
+        super(TwicorderStream, self).__init__(auth, listener, **options)
         self.api = API(auth)
         self._config = Config()
         self._id_to_screenname_time = None
@@ -212,6 +212,6 @@ class TwitterStream(Stream):
 
 if __name__ == '__main__':
     auth = get_auth_handler()
-    listener = TwitterListener(auth=auth)
-    twitter_stream = TwitterStream(auth, listener)
+    listener = TwicorderListener(auth=auth)
+    twitter_stream = TwicorderStream(auth, listener)
     twitter_stream.filter(track=['the'])

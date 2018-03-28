@@ -4,7 +4,7 @@
 import os
 import yaml
 
-from listener.constants import THIS_DIR
+from twicorder.constants import THIS_DIR
 
 from tweepy import OAuthHandler
 

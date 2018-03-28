@@ -5,7 +5,7 @@ import datetime
 import os
 import yaml
 
-from constants import THIS_DIR
+from twicorder.constants import THIS_DIR
 
 
 class Config(object):
@@ -27,7 +27,7 @@ class Config(object):
             dict: Config object
 
         """
-        listener_path = os.path.join(THIS_DIR, 'config', 'listener.yaml')
+        listener_path = os.path.join(THIS_DIR, 'config', 'twicorder.yaml')
         with open(listener_path, 'r') as stream:
             config = yaml.load(stream)
         return config
