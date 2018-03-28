@@ -20,6 +20,14 @@ from twicorder.constants import TW_TIME_FORMAT
 class TwicorderListener(StreamListener):
 
     def __init__(self, auth=None, api=None):
+        """
+        TwicorderListener constructor.
+
+        Args:
+            auth (tweepy.OAuthHandler): Authentication handler
+            api (tweepy.api.API): Tweepy API instance
+
+        """
         self.api = api or API(auth)
         self._config = Config()
         self._data = []
@@ -28,10 +36,25 @@ class TwicorderListener(StreamListener):
 
     @property
     def config(self):
+        """
+        Object holding the user config.
+
+        Returns:
+            dict: Config object
+
+        """
         return self._config.get()
 
     @property
     def users(self):
+        """
+        Holds a list of captured user data that has not expired. Expiry time
+        can be set in the config file and defaults to 15 minutes.
+
+        Returns:
+            dict: Users (id_str: user dict)
+
+        """
         this_tz = datetime.now(timezone.utc).astimezone().tzinfo
         cull_time = timedelta(
             minutes=self.config.get('user_lookup_interval', 15)
@@ -49,22 +72,59 @@ class TwicorderListener(StreamListener):
 
     @property
     def save_dir(self):
+        """
+        Save location for captured data. Set in config file.
+
+        Returns:
+            str: Path to save location for captured data
+
+        """
         return os.path.expanduser(self.config['save_dir'])
 
     @property
     def save_prefix(self):
+        """
+        Names of files containing captured data will be prefixed with this
+        string. Set in config file.
+
+        Returns:
+            str: Prefix
+
+        """
         return self.config['save_prefix']
 
     @property
     def save_postfix(self):
+        """
+        Names of files containing captured data will be postfixed with this
+        string. Set in config file.
+
+        Returns:
+            str: Postfix. Often extension, such as ".txt"
+
+        """
         return self.config['save_postfix']
 
     @property
     def tweets_per_file(self):
+        """
+        Max number of tweets saved to one file. Set in config file.
+
+        Returns:
+            int: Max number of tweets
+
+        """
         return self.config['tweets_per_file']
 
     @property
     def file_name(self):
+        """
+        Generates the file name used when saving captured data.
+
+        Returns:
+            str: File name
+
+        """
         if not self._file_name or len(self._data) >= self.tweets_per_file:
             self._data = []
             now = '{:%Y-%m-%d_%H-%M-%S.%f}'.format(datetime.now())
@@ -73,10 +133,31 @@ class TwicorderListener(StreamListener):
 
     @staticmethod
     def extract_extended(data):
+        """
+        Extracts the full text tweet from a tweet object if available.
+
+        Args:
+            data (dict): Tweet object
+
+        Returns:
+            str: Tweet text
+
+        """
         return data.get('extended_tweet', {}).get('full_text')
 
     @classmethod
     def get_full_text(cls, data):
+        """
+        Gets the full text for the given tweet, whether it is an extended tweet
+        or not.
+
+        Args:
+            data (dict): Tweet object
+
+        Returns:
+            Tweet text
+
+        """
         for d in [data, data.get('retweeted_status', {})]:
             text = cls.extract_extended(d)
             if text:
@@ -86,6 +167,16 @@ class TwicorderListener(StreamListener):
         return data['text']
 
     def update_mentions(self, data, created_at=None):
+        """
+        Fleshing out the mentions section of a tweet object with full user
+        information, rather than just a stub. Utilises cached user data if
+        available. Otherwise querying the API for user data.
+
+        Args:
+            data (dict): Tweet object
+            created_at (str): Tweet timestamp
+
+        """
         if not created_at:
             created_at = data['created_at']
         for key in data:
@@ -101,6 +192,17 @@ class TwicorderListener(StreamListener):
                 self.update_mentions(data[key], created_at)
 
     def on_data(self, json_data):
+        """
+        Defines the actions to take on data capture. Caching all available user
+        data and writing tweet data to disk.
+
+        Args:
+            json_data (str): String containing tweet data on JSON format
+
+        Returns:
+            bool: True if successful
+
+        """
         file_path = os.path.join(self.save_dir, self.file_name)
         data = json.loads(json_data)
         if data.get('created_at'):
@@ -122,6 +224,19 @@ class TwicorderListener(StreamListener):
         return True
 
     def on_error(self, status_code):
+        """
+        Defines the actions to take when errors are encountered. Printing
+        warnings. If error code 420 is encountered, Twitter's rate limit has
+        been exceeded and Twicorder will pause for 5 seconds before resuming
+        operation.
+
+        Args:
+            status_code (int): Twitter API error code
+
+        Returns:
+            bool: True if error is not critical
+
+        """
         message = 'Twitter error code: {}'.format(status_code)
         if status_code == 420:
             message = "Rate limitation in effect. Pausing for 5 seconds..."
