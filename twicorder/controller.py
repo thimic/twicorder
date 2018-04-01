@@ -220,7 +220,8 @@ class TwicorderListener(StreamListener):
         if not tweet:
             utils.message('Odd Tweet!', json_data)
             return True
-        print(u'{}: {}'.format(timestamp, tweet.replace('\n', ' ')))
+        user = data.get('user', {}).get('screen_name', '-')
+        print(u'{}, @{}: {}'.format(timestamp, user, tweet.replace('\n', ' ')))
         return True
 
     def on_error(self, status_code):
@@ -251,6 +252,8 @@ class TwicorderStream(Stream):
 
     def __init__(self, auth, listener, **options):
         super(TwicorderStream, self).__init__(auth, listener, **options)
+        msg = 'Listener starting at {:%d %b %Y %H:%M:%S}'.format(datetime.now())
+        utils.message('Info', msg)
         self.api = API(auth)
         self._config = Config()
         self._id_to_screenname_time = None

@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import copy
-import json
-
 
 def message(title='Warning', body='', width=80):
     """
