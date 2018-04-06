@@ -1,6 +1,88 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import os
+
+from gzip import GzipFile
+from twicorder.constants import REGULAR_EXTENSIONS, COMPRESSED_EXTENSIONS
+
+
+def twopen(filename, mode='r'):
+    """
+    Replacement method for Python's build-in open. Adds the option to handle
+    compressed files.
+
+    Args:
+        filename (str): Path to file
+        mode (str): Open mode
+
+    Returns:
+        TextIOWrapper / GzipFile: File object
+
+    Raises:
+        IOError: If extension is unknown.
+
+    """
+    ext = os.path.splitext(filename)[-1].strip('.')
+    if ext in REGULAR_EXTENSIONS:
+        return open(file=filename, mode=mode)
+    elif ext in COMPRESSED_EXTENSIONS:
+        return GzipFile(filename=filename, mode=mode)
+    else:
+        raise IOError('Unrecognised format: {}'.format(ext))
+
+
+def read(filename):
+    """
+    Reading the file for a given path.
+
+    Args:
+        filename (str): Path to file to read
+
+    Returns:
+        str: File data
+
+    """
+    with twopen(filename=filename, mode='r') as file_object:
+        data = file_object.read()
+        if isinstance(file_object, GzipFile):
+            data = data.decode('utf-8')
+        return data
+
+
+def readlines(filename):
+    """
+    Reading the file for a given path.
+
+    Args:
+        filename (str): Path to file to read
+
+    Returns:
+        str: File data
+
+    """
+    with twopen(filename=filename, mode='r') as file_object:
+        data = file_object.readlines()
+        if isinstance(file_object, GzipFile):
+            data = [d.decode('utf-8') for d in data]
+        return data
+
+
+def write(data, filename):
+    """
+    Appending data to the given file.
+
+    Args:
+        data (str): Data to append to the given file
+        filename (str): Path to file to write
+
+    """
+    with twopen(filename=filename, mode='a') as file_object:
+        if isinstance(file_object, GzipFile):
+            file_object.write(data.encode('utf-8'))
+            return
+        file_object.write(data)
+
 
 def message(title='Warning', body='', width=80):
     """

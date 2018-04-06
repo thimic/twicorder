@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import argparse
+import os
+
+from twicorder.utils import read
+
+
+def main():
+    """
+    A reader for TwiCorder files. Prints them to the command line or optionally
+    writes them in plain text to a provided file path.
+    """
+    parser = argparse.ArgumentParser('TwiReader - A TwiCorder file reader')
+    parser.add_argument(
+        '-f', '--file',
+        dest='file',
+        type=str,
+        required=True,
+        help='File to read'
+    )
+    parser.add_argument(
+        '-o', '--output',
+        dest='output',
+        type=str,
+        help='Destination for file'
+    )
+    args = parser.parse_args()
+    data = read(args.file)
+    if args.output:
+        with open(os.path.expanduser(args.output), 'w') as stream:
+            stream.write(data)
+        return
+    print(data)
+
+
+if __name__ == '__main__':
+    main()

@@ -2,10 +2,10 @@
 # Save location, file name and extension for collected data
 save_dir: "~/Dropbox/Projects/SMC/SleepingGiants"
 save_prefix: "slpng_giants_"
-save_postfix: ".txt"
+save_postfix: ".twzip"
 
 # Amount of tweets to store per file
-tweets_per_file: 100
+tweets_per_file: 1000
 
 # How often this config will be reloaded by the listener (minutes)
 config_reload_interval: 15

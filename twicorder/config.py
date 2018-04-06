@@ -27,7 +27,7 @@ class Config(object):
             dict: Config object
 
         """
-        listener_path = os.path.join(THIS_DIR, 'config', 'twicorder.yaml')
+        listener_path = os.path.join(THIS_DIR, 'config', 'preferences.yaml')
         with open(listener_path, 'r') as stream:
             config = yaml.load(stream)
         return config

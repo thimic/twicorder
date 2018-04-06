@@ -213,12 +213,10 @@ class TwicorderListener(StreamListener):
             if self.config.get('full_user_mentions', False):
                 self.update_mentions(data)
         self._data.append(data)
-        with open(file_path, 'a') as stream:
-            stream.write(json.dumps(data) + '\n')
+        utils.write(json.dumps(data) + '\n', file_path)
         timestamp = '{:%d %b %Y %H:%M:%S}'.format(datetime.now())
         tweet = self.get_full_text(data)
         if not tweet:
-            utils.message('Odd Tweet!', json_data)
             return True
         user = data.get('user', {}).get('screen_name', '-')
         print(u'{}, @{}: {}'.format(timestamp, user, tweet.replace('\n', ' ')))
