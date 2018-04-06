@@ -56,11 +56,18 @@ class TwiModel(object):
             self.location, '{}*'.format(self._config.get('save_prefix'))
         )
 
+    def refresh(self):
+        self._files = set()
+
     @property
     def location(self):
         if not self._location:
             self._location = os.path.expanduser(self._config.get('save_dir'))
         return self._location
+
+    @location.setter
+    def location(self, location):
+        self._location = location
 
     @property
     def files(self):

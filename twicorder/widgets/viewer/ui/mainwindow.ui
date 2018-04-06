@@ -68,9 +68,9 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="location_go_button">
+       <widget class="QPushButton" name="location_refresh_button">
         <property name="text">
-         <string>Go</string>
+         <string>Refresh</string>
         </property>
        </widget>
       </item>

@@ -20,7 +20,7 @@ class TwiFileItem(QtWidgets.QListWidgetItem):
     def __init__(self, twifile, parent=None):
         super(TwiFileItem, self).__init__(parent=parent)
         self.__twifile = twifile
-        self.setText(twifile.label)
+        self.setText(twifile.name)
 
     @property
     def twifile(self):

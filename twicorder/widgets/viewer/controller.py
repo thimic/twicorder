@@ -24,6 +24,12 @@ class TwiViewer(QtCore.QObject):
     def switchboard(self):
         self.view.files_listwidget.currentItemChanged.connect(self.on_file_selected)
         self.view.tweets_listwidget.currentItemChanged.connect(self.on_tweet_selected)
+        self.view.location_refresh_button.clicked.connect(self.on_refresh)
+
+    def on_refresh(self):
+        self.model.location = self.view.location
+        self.model.refresh()
+        self.model_to_view()
 
     def on_file_selected(self, current, previous):
         if not current:
