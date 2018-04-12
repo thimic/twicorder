@@ -12,7 +12,7 @@ config_reload_interval: 15
 
 # Keywords to track in tweets
 track:
-  -
+  - "#BreakingMyTwitter"
 
 # User IDs to follow
 follow:
@@ -41,4 +41,4 @@ full_user_mentions: True
 
 # When performing user lookups, cache the user and don't check again for this
 # interval (minutes)
-user_lookup_interval: 15
+user_lookup_interval: 30

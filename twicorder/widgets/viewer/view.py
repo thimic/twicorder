@@ -6,13 +6,16 @@ import json
 import os
 import sys
 
+from datetime import datetime, timezone
+
 from PyQt5 import QtCore, QtWidgets, uic
 
-from twicorder.constants import APP, COMPANY
+from twicorder.constants import APP, COMPANY, TW_TIME_FORMAT
 
 
 THIS_DIR = os.path.dirname(inspect.getfile(inspect.currentframe()))
 form_class, base_class = uic.loadUiType(os.path.join(THIS_DIR, 'ui', 'mainwindow.ui'))
+form_tweet, base_tweet = uic.loadUiType(os.path.join(THIS_DIR, 'ui', 'tweetitem.ui'))
 
 
 class TwiFileItem(QtWidgets.QListWidgetItem):
@@ -32,11 +35,27 @@ class TwiTweetItem(QtWidgets.QListWidgetItem):
     def __init__(self, tweet, parent=None):
         super(TwiTweetItem, self).__init__(parent=parent)
         self.__tweet = tweet
-        self.setText(tweet.get('id_str'))
+        if not tweet.get('user'):
+            self.setText(tweet.get('id_str'))
+            return
+        this_tz = datetime.now(timezone.utc).astimezone().tzinfo
+        timestamp = datetime.strptime(tweet['created_at'], TW_TIME_FORMAT)
+        timestamp_local = timestamp.astimezone(this_tz)
+        self.__widget = uic.loadUi(os.path.join(THIS_DIR, 'ui', 'tweetitem.ui'))
+        self.__widget.name_label.setText(tweet['user'].get('name', 'N/A'))
+        self.__widget.handle_label.setText('@{}'.format(tweet['user'].get('screen_name')))
+        self.__widget.tweet_label.setText(tweet.get('text'))
+        self.__widget.time_label.setText('{:%a %-d %b %H:%M}'.format(timestamp_local))
+
+        self.setSizeHint(self.__widget.size())
 
     @property
     def tweet(self):
         return self.__tweet
+
+    @property
+    def widget(self):
+        return self.__widget
 
 
 class TwiView(form_class, base_class):
@@ -49,6 +68,12 @@ class TwiView(form_class, base_class):
         self.statusBar().addWidget(self.statusbar_label)
 
         self.restore_window_state()
+
+        self.data_treewidget.itemExpanded.connect(self.resize_column)
+        self.data_treewidget.itemCollapsed.connect(self.resize_column)
+
+    def resize_column(self):
+        self.data_treewidget.resizeColumnToContents(0)
 
     def closeEvent(self, event):
         settings = QtCore.QSettings(COMPANY, APP)
@@ -93,12 +118,13 @@ class TwiView(form_class, base_class):
         for tweet in tweets:
             item = TwiTweetItem(tweet)
             self.tweets_listwidget.addItem(item)
+            self.tweets_listwidget.setItemWidget(item, item.widget)
 
     def add_data(self, data):
         self.data_treewidget.clear()
         root = self.data_treewidget.topLevelItem(0)
         self.build_tree(data, root)
-        self.data_treewidget.resizeColumnToContents(0)
+        self.resize_column()
         self.data_textedit.setPlainText(json.dumps(data))
 
     def build_tree(self, data, root, index=0):
