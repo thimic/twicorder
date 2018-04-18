@@ -11,6 +11,19 @@ THIS_DIR = os.path.dirname(inspect.getfile(inspect.currentframe()))
 form_class, base_class = uic.loadUiType(os.path.join(THIS_DIR, 'ui', 'view.ui'))
 
 
+class DigitItem(QtWidgets.QTableWidgetItem):
+    def __init__(self, value):
+        super(DigitItem, self).__init__(str(value))
+        self.setData(QtCore.Qt.EditRole, value)
+
+    def __lt__(self, other):
+        if isinstance(other, DigitItem):
+            self_val = int(self.data(QtCore.Qt.EditRole))
+            other_val = int(other.data(QtCore.Qt.EditRole))
+            return self_val < other_val
+        return super(DigitItem, self).__lt__(other)
+
+
 class View(form_class, base_class):
 
     def __init__(self, parent=None):
@@ -60,7 +73,7 @@ class View(form_class, base_class):
         self.top_tweeters_table.setRowCount(len(counter))
         for idx, (user, count) in enumerate(sorted(counter.items(), key=lambda x: x[1], reverse=True)):
             user_item = QtWidgets.QTableWidgetItem(f'@{user}')
-            count_item = QtWidgets.QTableWidgetItem(f'{count}')
+            count_item = DigitItem(count)
             self.top_tweeters_table.setItem(idx, 0, user_item)
             self.top_tweeters_table.setItem(idx, 1, count_item)
         self.top_tweeters_table.resizeColumnToContents(0)
@@ -71,7 +84,7 @@ class View(form_class, base_class):
         self.top_hashtags_table.setRowCount(len(counter))
         for idx, (hashtag, count) in enumerate(sorted(counter.items(), key=lambda x: x[1], reverse=True)):
             user_item = QtWidgets.QTableWidgetItem(f'#{hashtag}')
-            count_item = QtWidgets.QTableWidgetItem(f'{count}')
+            count_item = DigitItem(count)
             self.top_hashtags_table.setItem(idx, 0, user_item)
             self.top_hashtags_table.setItem(idx, 1, count_item)
         self.top_hashtags_table.resizeColumnToContents(0)
@@ -82,7 +95,7 @@ class View(form_class, base_class):
         self.most_followed_table.setRowCount(len(counter))
         for idx, (user, count) in enumerate(sorted(counter.items(), key=lambda x: x[1], reverse=True)):
             user_item = QtWidgets.QTableWidgetItem(f'@{user}')
-            count_item = QtWidgets.QTableWidgetItem(f'{count}')
+            count_item = DigitItem(count)
             self.most_followed_table.setItem(idx, 0, user_item)
             self.most_followed_table.setItem(idx, 1, count_item)
         self.most_followed_table.resizeColumnToContents(0)
