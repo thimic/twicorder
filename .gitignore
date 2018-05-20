@@ -108,3 +108,6 @@ auth.yaml
 # File system
 .DS_Store
 thumbs.db
+
+# Sandbox tests
+python/twicorder/sandbox/
