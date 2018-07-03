@@ -103,7 +103,7 @@ ENV/
 # PyCharm
 .idea
 
-# auth.yaml
+auth.yaml
 
 # File system
 .DS_Store

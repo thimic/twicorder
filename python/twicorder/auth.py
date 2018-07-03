@@ -3,24 +3,31 @@
 
 import os
 
-import yaml
-
 from tweepy import OAuthHandler
-from twicorder.constants import CONFIG_DIR
 
 
 def get_auth_handler():
     """
-    Loads login credentials from auth.yaml and instantiates an authentication
-    handler.
+        Loads login credentials from environment variables and instantiates an
+        authentication handler.
 
-    Returns:
-        tweepy.OAuthHandler: Authentication handler
+        Returns:
+            tweepy.OAuthHandler: Authentication handler
 
-    """
-    auth_path = os.path.join(CONFIG_DIR, 'auth.yaml')
-    with open(auth_path, 'r') as stream:
-        auth_dict = yaml.load(stream)
-    auth_handler = OAuthHandler(**auth_dict['application'])
-    auth_handler.set_access_token(**auth_dict['user'])
+        """
+    app_auth = {
+        'consumer_key': os.getenv('CONSUMER_KEY'),
+        'consumer_secret': os.getenv('CONSUMER_SECRET')
+    }
+    user_auth = {
+        'key': os.getenv('ACCESS_TOKEN'),
+        'secret': os.getenv('ACCESS_SECRET')
+    }
+    auth_handler = OAuthHandler(**app_auth)
+    auth_handler.set_access_token(**user_auth)
     return auth_handler
+
+
+if __name__ == '__main__':
+    handler = get_auth_handler()
+    print(handler.oauth)

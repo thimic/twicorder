@@ -55,6 +55,9 @@ class TwiModel(object):
         self._glob_pattern = os.path.join(
             self.location, '{}*'.format(self._config.get('save_prefix'))
         )
+        self._glob_pattern = os.path.join(
+            self.location, '*{}'.format(self._config.get('save_postfix'))
+        )
 
     def refresh(self):
         self._files = set()
@@ -62,7 +65,8 @@ class TwiModel(object):
     @property
     def location(self):
         if not self._location:
-            self._location = os.path.expanduser(self._config.get('save_dir'))
+            # self._location = os.path.expanduser(self._config.get('save_dir'))
+            self._location = os.path.expanduser(os.path.join(self._config.get('save_dir'), 'crawler', 'slpng_giants_timeline'))
         return self._location
 
     @location.setter

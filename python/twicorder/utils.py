@@ -68,16 +68,17 @@ def readlines(filename):
         return data
 
 
-def write(data, filename):
+def write(data, filename, mode='a'):
     """
     Appending data to the given file.
 
     Args:
         data (str): Data to append to the given file
         filename (str): Path to file to write
+        mode (str): File stream mode ('a'. 'w' etc)
 
     """
-    with twopen(filename=filename, mode='a') as file_object:
+    with twopen(filename=filename, mode=mode) as file_object:
         if isinstance(file_object, GzipFile):
             file_object.write(data.encode('utf-8'))
             return
