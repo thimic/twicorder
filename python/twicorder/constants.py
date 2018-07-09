@@ -3,6 +3,7 @@
 
 import inspect
 import os
+import tempfile
 
 THIS_DIR = os.path.dirname(inspect.getfile(inspect.currentframe()))
 CONFIG_DIR = os.path.join(os.sep.join(THIS_DIR.split(os.sep)[:-2]), 'config')
@@ -13,6 +14,8 @@ COMPRESSED_EXTENSIONS = ['gzip', 'zip', 'twzip']
 
 COMPANY = 'Zhenyael'
 APP = 'TwiCorder'
+
+APP_DATA = tempfile.mktemp('.json', 'twicorder_app_data_')
 
 
 if __name__ == '__main__':

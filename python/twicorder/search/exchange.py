@@ -2,21 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import json
-import os
+import time
 
 from datetime import datetime
 from queue import Queue
 from threading import Thread
 
-
-class Singleton(type):
-
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
-        return cls._instances[cls]
+from twicorder.utils import write, Singleton
 
 
 class RateLimitCentral(object, metaclass=Singleton):
@@ -25,6 +17,13 @@ class RateLimitCentral(object, metaclass=Singleton):
         self._limits = {}
 
     def update(self, endpoint, header):
+        limit_keys = {
+            'x-rate-limit-limit',
+            'x-rate-limit-remaining',
+            'x-rate-limit-reset'
+        }
+        if not limit_keys.issubset(header.keys()):
+            return
         self._limits[endpoint] = RateLimit(header)
 
     def get(self, endpoint):
@@ -53,15 +52,15 @@ class RateLimit(object):
 
     def __init__(self, headers):
         self._cap = headers.get('x-rate-limit-limit')
-        self._remaining = headers.get('x-rate-limit-remaining')
-        self._reset = (
-            datetime.fromtimestamp(int(headers.get('x-rate-limit-reset')))
-        )
+        self._remaining = int(headers.get('x-rate-limit-remaining'))
+        self._reset = float(headers.get('x-rate-limit-reset'))
+        print(self._reset - time.time())
 
     def __repr__(self):
+        reset = datetime.fromtimestamp(self._reset)
         representation = (
             f'RateLimit(cap={self.cap}, remaining={self.remaining}, '
-            f'reset="{self.reset:%y.%m.%d %H:%M:%S}")'
+            f'reset="{reset:%y.%m.%d %H:%M:%S}")'
         )
         return representation
 
@@ -82,62 +81,45 @@ class RateLimit(object):
         return self._reset
 
 
-class MultiPart(object):
+class QueryWorker(Thread):
 
-    def __init__(self, query):
-        self._query = query
+    def __init__(self, *args, **kwargs):
+        super(QueryWorker, self).__init__(*args, **kwargs)
+        self._query = None
+
+    def setup(self, queue):
+        self._queue = queue
+
+    @property
+    def queue(self):
+        return self._queue
 
     @property
     def query(self):
         return self._query
 
-    @property
-    def max_count(self):
-        return self.query.max_count
-
     def run(self):
         while True:
-            response = self.query.run()
-            content = response.content.decode()
-            data = json.loads(content)
-            if len(data) < self.max_count:
+            self._query = self.queue.get()
+            if self.query is None:
+                print(f'Terminating thread "{self.name}"')
                 break
-
-
-class WorkerDispatch(object):
-
-    @classmethod
-    def get(cls, queue):
-        def worker():
-            while True:
-                query = queue.get()
-                if query is None:
-                    import inspect
-                    stack = inspect.stack()
-                    the_class = stack[1][0].f_locals['self']
-                    print(f'Terminating thread "{the_class.name}"')
-                    break
-                data = cls.run_query(query)
-                print(query.request_url, len(data))
-                print(RateLimitCentral().get(query.endpoint))
-                queue.task_done()
-        return worker
-
-    @classmethod
-    def run_query(cls, query):
-        response = query.run()
-        content = response.content.decode()
-        data = json.loads(content)
-        headers = response.headers
-        RateLimitCentral().update(query.endpoint, headers)
-        return data
+            print(self.query.request_url, self.query.uid)
+            while not self.query.done:
+                results = self.query.iterate()
+                if results:
+                    results_str = '\n'.join(json.dumps(r) for r in results)
+                    write(f'{results_str}\n', '~/Desktop/crawl.txt')
+                    print(f'Wrote {len(results)} results to ~/Desktop/crawl.txt')
+            print(self.query.request_url, len(self.query.results))
+            self.queue.task_done()
 
 
 class QueryExchange(object):
 
     def __init__(self):
         self._queues = {}
-        self._threads = []
+        self._threads = {}
 
     @property
     def queues(self):
@@ -151,21 +133,30 @@ class QueryExchange(object):
         if not self._queues.get(endpoint):
             queue = Queue()
             self._queues[endpoint] = queue
-            thread = Thread(target=WorkerDispatch.get(queue), name=endpoint)
+            thread = QueryWorker(name=endpoint)
+            thread.setup(queue=queue)
             thread.start()
-            self._threads.append(thread)
+            self._threads[endpoint] = thread
         return self._queues[endpoint]
 
     def add(self, query):
         queue = self.get_queue(query.endpoint)
+        if query in queue.queue:
+            print(f'Query with ID {query.uid} is already in the queue.')
+            return
+        thread = self.threads.get(query.endpoint)
+        if thread and thread.query == query:
+            print(f'Query with ID {query.uid} is already running.')
+            return
         queue.put(query)
+        print(queue.queue)
 
     def wait(self):
         for queue in self.queues.values():
             queue.put(None)
         # for queue in self.queues.values():
         #     queue.join()
-        for thread in self.threads:
+        for thread in self.threads.values():
             thread.join()
 
 

@@ -7,6 +7,16 @@ from gzip import GzipFile
 from twicorder.constants import REGULAR_EXTENSIONS, COMPRESSED_EXTENSIONS
 
 
+class Singleton(type):
+
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+
 def twopen(filename, mode='r'):
     """
     Replacement method for Python's build-in open. Adds the option to handle
@@ -23,6 +33,7 @@ def twopen(filename, mode='r'):
         IOError: If extension is unknown.
 
     """
+    filename = os.path.expanduser(filename)
     ext = os.path.splitext(filename)[-1].strip('.')
     if ext in REGULAR_EXTENSIONS:
         return open(file=filename, mode=mode)

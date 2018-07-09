@@ -1,0 +1,61 @@
+
+#friends_list:
+#  - frequency: .1
+#    kwargs:
+#      screen_name: slpng_giants
+#      cursor: -1
+#      count: 20
+
+#user_timeline:
+##  - frequency: 1
+##    kwargs:
+##      screen_name: slpng_giants
+##      count: 200
+#  - frequency: 1
+#    kwargs:
+#      screen_name: slpng_giants_nz
+#      count: 200
+#  - frequency: 1
+#    kwargs:
+#      screen_name: slpng_giants_no
+#      count: 200
+#  - frequency: 1
+#    kwargs:
+#      screen_name: slpng_giants_eu
+#      count: 200
+#  - frequency: 1
+#    kwargs:
+#      screen_name: slpng_giants_ca
+#      count: 200
+
+#fullarchive_get:
+#  - frequency: 15
+#    kwargs:
+#      query: "@slpng_giants"
+#      maxResults: 100
+
+#fullarchive_post:
+#  - frequency: 15
+#    kwargs:
+#      query: "@slpng_giants"
+#      maxResults: 100
+
+#rate_limit_status:
+#  - frequency: 1
+
+free_search:
+  - frequency: 1
+    kwargs:
+      q: "@slpng_giants"
+  - frequency: .5
+    kwargs:
+      q: "@slpng_giants_no"
+  - frequency: 5.
+    kwargs:
+      q: "@slpng_giants_eu"
+  - frequency: .5
+    kwargs:
+      q: "@slpng_giants_nz"
+  - frequency: .5
+    kwargs:
+      q: "@slpng_giants_ca"
