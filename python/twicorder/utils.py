@@ -34,6 +34,9 @@ def twopen(filename, mode='r'):
 
     """
     filename = os.path.expanduser(filename)
+    dirname = os.path.dirname(filename)
+    if mode in ('a', 'w') and not os.path.isdir(dirname):
+        os.makedirs(dirname)
     ext = os.path.splitext(filename)[-1].strip('.')
     if ext in REGULAR_EXTENSIONS:
         return open(file=filename, mode=mode)

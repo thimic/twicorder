@@ -75,7 +75,7 @@ class Scheduler(object):
 
     def cast_query(self, task):
         query_object = self.query_types[task.name]
-        query = query_object(**task.kwargs)
+        query = query_object(task.output, **task.kwargs)
         return query
 
 

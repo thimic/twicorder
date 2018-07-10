@@ -3,7 +3,7 @@
 
 import urllib
 
-from twicorder.search.queries import QueryTracker, RequestQuery
+from twicorder.search.queries import RequestQuery
 
 
 class TimelineQuery(RequestQuery):
@@ -20,8 +20,8 @@ class StandardSearchQuery(RequestQuery):
     _results_path = 'statuses'
     _fetch_more_path = 'search_metadata.next_results'
 
-    def __init__(self, **kwargs):
-        super(StandardSearchQuery, self).__init__(**kwargs)
+    def __init__(self, output=None, **kwargs):
+        super(StandardSearchQuery, self).__init__(output, **kwargs)
         self._kwargs.update({'result_type': 'recent', 'count': 100, 'include_entities': 1})
         self._kwargs.update(kwargs)
 
@@ -34,13 +34,6 @@ class StandardSearchQuery(RequestQuery):
             elif self.kwargs:
                 url += f'?{urllib.parse.urlencode(self.kwargs)}'
         return url
-
-    def iterate(self):
-        results = super(StandardSearchQuery, self).iterate()
-        if results and not self.last_item:
-            self.last_item = results[0].get('id_str')
-            QueryTracker.set(self.uid, self.last_item)
-        return results
 
 
 class FullArchiveGetQuery(RequestQuery):

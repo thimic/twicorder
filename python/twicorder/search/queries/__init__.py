@@ -5,35 +5,31 @@ import hashlib
 import json
 import os
 import requests
+import shelve
 import time
 import urllib
 
+from datetime import datetime
+
 from twicorder.auth import Auth, TokenAuth
-from twicorder.constants import APP_DATA
+from twicorder.config import Config
+from twicorder.constants import APP_DATA_TOKEN
 from twicorder.search.exchange import RateLimitCentral
-from twicorder.utils import Singleton
+from twicorder.utils import write
 
 
-class QueryTracker(object, metaclass=Singleton):
+class QueryTracker(object):
 
     @staticmethod
-    def _read():
-        if not os.path.isfile(APP_DATA):
-            return {}
-        with open(APP_DATA, 'r') as stream:
-            data = json.load(stream)
-        return data
+    def get(uid):
+        with shelve.open(APP_DATA_TOKEN) as db:
+            value = db.get(uid)
+        return value
 
-    @classmethod
-    def get(cls, uid):
-        return cls._read().get(uid)
-
-    @classmethod
-    def set(cls, uid, value):
-        data = cls._read()
-        data[uid] = value
-        with open(APP_DATA, 'w') as stream:
-            json.dump(data, stream)
+    @staticmethod
+    def put(uid, value):
+        with shelve.open(APP_DATA_TOKEN) as db:
+            db[uid] = value
 
 
 class BaseQuery(object):
@@ -45,11 +41,12 @@ class BaseQuery(object):
     _results_path = NotImplemented
     _fetch_more_path = NotImplemented
 
-    def __init__(self, **kwargs):
+    def __init__(self, output=None, **kwargs):
         self._done = False
         self._more_results = None
         self._results = []
         self._last_item = None
+        self._output = output
         self._kwargs = kwargs
         self._orig_kwargs = kwargs.copy()
 
@@ -66,6 +63,10 @@ class BaseQuery(object):
     @property
     def endpoint(self):
         return self._endpoint
+
+    @property
+    def output(self):
+        return self._output
 
     @property
     def since(self):
@@ -118,6 +119,21 @@ class BaseQuery(object):
     def run(self):
         raise NotImplementedError
 
+    def save(self):
+        config = Config.get()
+        save_root = config.get('save_dir')
+        save_dir = os.path.join(save_root, self.name, self.output or self.uid)
+        postfix = config.get('save_postfix')
+        now = datetime.now()
+        filename = f'{now:%Y-%m-%d_%H-%M-%S.%f}{postfix}'
+        file_path = os.path.join(save_dir, filename)
+        results_str = '\n'.join(json.dumps(r) for r in self.results)
+        write(f'{results_str}\n', file_path)
+        print(f'Wrote {len(self.results)} to "{file_path}"')
+        if not self.last_item:
+            self.last_item = self.results[0].get('id_str')
+            QueryTracker.put(self.uid, self.last_item)
+
 
 class TweepyQuery(BaseQuery):
 
@@ -140,18 +156,15 @@ class RequestQuery(BaseQuery):
     _fetch_more_path = 'next'
 
     _hash_keys = [
-        '_name',
         '_endpoint',
         '_results_path',
         '_fetch_more_path',
         '_orig_kwargs',
         '_base_url',
-        '_request_type',
-        '_token_auth',
     ]
 
-    def __init__(self, **kwargs):
-        super(RequestQuery, self).__init__(**kwargs)
+    def __init__(self, output=None, **kwargs):
+        super(RequestQuery, self).__init__(output, **kwargs)
         since = QueryTracker.get(self.uid)
         if since:
             self.kwargs[self.since] = since
@@ -185,6 +198,16 @@ class RequestQuery(BaseQuery):
         return hashlib.blake2s(hash_str).hexdigest()
 
     def run(self):
+        limit = RateLimitCentral().get(self.endpoint)
+        print(limit)
+        if limit and limit.remaining == 0:
+            sleep_time = max(limit.reset - time.time(), 0) + 2
+            msg = (
+                f'Sleeping for {sleep_time:.02f} seconds for endpoint '
+                f'"{self.endpoint}".'
+            )
+            print(msg)
+            time.sleep(sleep_time)
         if self._token_auth:
             request = getattr(requests, self.request_type)
             response = request(
@@ -201,22 +224,6 @@ class RequestQuery(BaseQuery):
                 print('<{r.status_code}> {r.reason}: {r.content}'.format(r=response))
             return
         RateLimitCentral().update(self.endpoint, response.headers)
-        limit = RateLimitCentral().get(self.endpoint)
-        print(limit)
-        if limit and limit.remaining == 0:
-            sleep_time = max(limit.reset - time.time(), 0) + 2
-            msg = (
-                f'Sleeping for {sleep_time:.02f} seconds for endpoint '
-                f'"{self.endpoint}".'
-            )
-            print(msg)
-            time.sleep(sleep_time)
-        return response
-
-    def iterate(self):
-        response = self.run()
-        if not(response and response.status_code == 200):
-            return []
         pagination = response.json()
         for token in self.fetch_more_path.split('.'):
             pagination = pagination.get(token, {})
@@ -228,5 +235,7 @@ class RequestQuery(BaseQuery):
         results = response.json()
         for token in self.results_path.split('.'):
             results = results.get(token, [])
-        self.results.extend(results)
+        self._results = results
+        if results:
+            self.save()
         return results

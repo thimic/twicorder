@@ -10,10 +10,10 @@ from twicorder.constants import CONFIG_DIR
 
 class Task(object):
 
-    def __init__(self, name, frequency=15, multipart=True, **kwargs):
+    def __init__(self, name, frequency=15, output=None, **kwargs):
         self._name = name
         self._frequency = frequency
-        self._multipart = multipart
+        self._output = output
         self._kwargs = kwargs
 
         self._last_run = None
@@ -41,12 +41,8 @@ class Task(object):
         return self._frequency
 
     @property
-    def multipart(self):
-        return self._multipart
-
-    @property
-    def args(self):
-        return self._args
+    def output(self):
+        return self._output
 
     @property
     def kwargs(self):
@@ -81,7 +77,7 @@ class TaskManager(object):
                 task = Task(
                     name=query,
                     frequency=raw_task.get('frequency') or 15,
-                    multipart=raw_task.get('multipart') or True,
+                    output=raw_task.get('output'),
                     **raw_task.get('kwargs') or {}
                 )
                 cls._tasks.append(task)

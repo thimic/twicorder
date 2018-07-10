@@ -45,17 +45,46 @@
 
 free_search:
   - frequency: 1
+    output: "slpng_giants/mentions"
     kwargs:
       q: "@slpng_giants"
-  - frequency: .5
+  - frequency: 1
+    output: "slpng_giants/replies"
+    kwargs:
+      q: "to:slpng_giants"
+
+  - frequency: 1
+    output: "slpng_giants_no/mentions"
     kwargs:
       q: "@slpng_giants_no"
-  - frequency: 5.
+  - frequency: 1
+    output: "slpng_giants_no/replies"
+    kwargs:
+      q: "to:slpng_giants_no"
+
+  - frequency: 1
+    output: "slpng_giants_eu/mentions"
     kwargs:
       q: "@slpng_giants_eu"
-  - frequency: .5
+  - frequency: 1
+    output: "slpng_giants_eu/replies"
+    kwargs:
+      q: "to:slpng_giants_eu"
+
+  - frequency: 1
+    output: "slpng_giants_nz/mentions"
     kwargs:
       q: "@slpng_giants_nz"
-  - frequency: .5
+  - frequency: 1
+    output: "slpng_giants_nz/replies"
+    kwargs:
+      q: "to:slpng_giants_nz"
+
+  - frequency: 1
+    output: "slpng_giants_ca/mentions"
     kwargs:
       q: "@slpng_giants_ca"
+  - frequency: 1
+    output: "slpng_giants_ca/replies"
+    kwargs:
+      q: "to:slpng_giants_ca"

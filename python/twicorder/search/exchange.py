@@ -106,11 +106,7 @@ class QueryWorker(Thread):
                 break
             print(self.query.request_url, self.query.uid)
             while not self.query.done:
-                results = self.query.iterate()
-                if results:
-                    results_str = '\n'.join(json.dumps(r) for r in results)
-                    write(f'{results_str}\n', '~/Desktop/crawl.txt')
-                    print(f'Wrote {len(results)} results to ~/Desktop/crawl.txt')
+                self.query.run()
             print(self.query.request_url, len(self.query.results))
             self.queue.task_done()
 
