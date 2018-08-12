@@ -1,20 +1,175 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import logging
 import os
+import sqlite3
+import sys
 
 from gzip import GzipFile
-from twicorder.constants import REGULAR_EXTENSIONS, COMPRESSED_EXTENSIONS
+from logging import FileHandler, StreamHandler
+
+from twicorder.constants import (
+    REGULAR_EXTENSIONS, COMPRESSED_EXTENSIONS, USER_DIR
+)
+
+
+class FileLogger(object):
+
+    @staticmethod
+    def get():
+        log_path = os.path.join(USER_DIR, 'logs', 'twicorder.log')
+        if not os.path.exists(os.path.dirname(log_path)):
+            os.makedirs(os.path.dirname(log_path))
+        logger = logging.getLogger('TwiCorder')
+        file_handler = FileHandler(log_path)
+        formatter = logging.Formatter(
+            '%(asctime)s: [%(levelname)s] %(message)s'
+        )
+        file_handler.setFormatter(formatter)
+        file_handler.setLevel(logging.WARNING)
+        logger.addHandler(file_handler)
+
+        stream_handler = StreamHandler(sys.stdout)
+        stream_handler.setLevel(logging.DEBUG)
+        logger.addHandler(stream_handler)
+
+        logger.setLevel(logging.DEBUG)
+
+        return logger
 
 
 class Singleton(type):
+    """
+    Class that can only be instanciated once.
+    """
 
     _instances = {}
 
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+            instance = super(Singleton, cls).__call__(*args, **kwargs)
+            cls._instances[cls] = instance
         return cls._instances[cls]
+
+
+def auto_commit(func):
+    def func_wrapper(self, *args, **kwargs):
+        with self._conn:
+            func(self, *args, **kwargs)
+    return func_wrapper
+
+
+class AppData(object):
+    """
+    Class for reading and writing AppData to be used between sessions.
+    """
+
+    _data_path = os.path.join(USER_DIR, 'AppData')
+
+    def __init__(self):
+        if not os.path.exists(self._data_path):
+            os.makedirs(self._data_path)
+        filepath = os.path.join(self._data_path, 'twicorder.sql')
+        self._conn = sqlite3.connect(
+            filepath,
+            isolation_level=None,
+            check_same_thread=True
+        )
+
+    def __del__(self):
+        self._conn.close()
+
+    def _make_query_table(self, name):
+        cursor = self._conn.cursor()
+        cursor.execute(
+            f'''
+            CREATE TABLE IF NOT EXISTS [{name}] (
+                tweet_id INTEGER PRIMARY KEY,
+                timestamp INTEGER NOT NULL
+            )
+            '''
+        )
+
+    def _make_last_id_table(self):
+        cursor = self._conn.cursor()
+        cursor.execute(
+            '''
+            CREATE TABLE IF NOT EXISTS queries_last_id (
+                query_hash TEXT PRIMARY KEY,
+                tweet_id INTEGER NOT NULL
+            )
+            '''
+        )
+
+    def add_query_tweet(self, query_name, tweet_id, timestamp):
+        self._make_query_table(query_name)
+        cursor = self._conn.cursor()
+        cursor.execute(
+            f'''
+            INSERT OR REPLACE INTO {query_name} VALUES (
+                ?, ?
+            )
+            ''',
+            (tweet_id, timestamp)
+        )
+
+    def add_query_tweets(self, query_name, tweets):
+        self._make_query_table(query_name)
+        cursor = self._conn.cursor()
+        cursor.executemany(
+            f'''
+            INSERT OR REPLACE INTO {query_name} VALUES (
+                ?, ?
+            )
+            ''',
+            tweets
+        )
+
+    def get_query_tweets(self, query_name):
+        self._make_query_table(query_name)
+        cursor = self._conn.cursor()
+        cursor.execute(
+            f'''
+            SELECT DISTINCT
+                tweet_id, timestamp
+            FROM
+                {query_name}
+            '''
+        )
+        return cursor.fetchall()
+
+    def set_last_query_id(self, query_hash, tweet_id):
+        self._make_last_id_table()
+        cursor = self._conn.cursor()
+        cursor.execute(
+            '''
+            INSERT OR REPLACE INTO queries_last_id VALUES (
+                ?, ?
+            )
+            ''',
+            (query_hash, tweet_id)
+        )
+
+    def get_last_query_id(self, query_hash):
+        self._make_last_id_table()
+        cursor = self._conn.cursor()
+        cursor.execute(
+            '''
+            SELECT
+            DISTINCT
+                tweet_id
+            FROM
+                queries_last_id
+            WHERE
+                query_hash=?
+            ''',
+            (query_hash,)
+        )
+        result = cursor.fetchone()
+        if not result:
+            return
+        return result[0]
 
 
 def twopen(filename, mode='r'):
@@ -123,24 +278,38 @@ def message(title='Warning', body='', width=80):
     print(text.format(header, body, footer))
 
 
-def find_key(key, data):
+def collect_key_values(key, data):
     """
-    Searches a nested dictionary for a key and returns a list of all values for
-    said key.
+    Builds a list of values for all keys matching the given "key" in a nested
+    dictionary.
 
     Args:
-        key (str): Key to search for
-        data (dict): Dictionary to examine
+        key (object): Dictionary key to search for
+        data (dict): Nested data dict
 
     Returns:
         list: List of values for given key
 
     """
-    found = []
+    values = []
     for k, v in data.items():
         if k == key:
-            found.append(v)
+            values.append(v)
             continue
         if isinstance(v, dict):
-            found += find_key(key, v)
-    return found
+            values += collect_key_values(key, v)
+    return values
+
+
+def flatten(l):
+    """
+    Flattens a nested list
+
+    Args:
+        l (list): Nested list
+
+    Returns:
+        list: Flattened list
+
+    """
+    return [item for sublist in l for item in sublist]

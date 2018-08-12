@@ -6,27 +6,71 @@
 #      cursor: -1
 #      count: 20
 
-#user_timeline:
-##  - frequency: 1
-##    kwargs:
-##      screen_name: slpng_giants
-##      count: 200
-#  - frequency: 1
-#    kwargs:
-#      screen_name: slpng_giants_nz
-#      count: 200
-#  - frequency: 1
-#    kwargs:
-#      screen_name: slpng_giants_no
-#      count: 200
-#  - frequency: 1
-#    kwargs:
-#      screen_name: slpng_giants_eu
-#      count: 200
-#  - frequency: 1
-#    kwargs:
-#      screen_name: slpng_giants_ca
-#      count: 200
+user_timeline:
+  - frequency: 60
+    output: "slpng_giants/timeline"
+    kwargs:
+      screen_name: slpng_giants
+  - frequency: 1440
+    output: "slpng_giants_no/timeline"
+    kwargs:
+      screen_name: slpng_giants_no
+  - frequency: 240
+    output: "slpng_giants_eu/timeline"
+    kwargs:
+      screen_name: slpng_giants_eu
+  - frequency: 1440
+    output: "slpng_giants_nz/timeline"
+    kwargs:
+      screen_name: slpng_giants_nz
+  - frequency: 240
+    output: "slpng_giants_ca/timeline"
+    kwargs:
+      screen_name: slpng_giants_ca
+  - frequency: 240
+    output: "slpng_giants_fr/timeline"
+    kwargs:
+      screen_name: slpng_giants_fr
+  - frequency: 240
+    output: "slpng_giants_se/timeline"
+    kwargs:
+      screen_name: slpng_giants_se
+  - frequency: 720
+    output: "slpng_giants_de/timeline"
+    kwargs:
+      screen_name: slpng_giants_de
+  - frequency: 1440
+    output: "slpng_giants_ch/timeline"
+    kwargs:
+      screen_name: slpng_giants_ch
+  - frequency: 1440
+    output: "slpng_giants_be/timeline"
+    kwargs:
+      screen_name: slpng_giants_be
+  - frequency: 1440
+    output: "slpng_giants_nl/timeline"
+    kwargs:
+      screen_name: slpng_giants_nl
+  - frequency: 720
+    output: "slpng_giants_br/timeline"
+    kwargs:
+      screen_name: slpng_giants_br
+  - frequency: 1440
+    output: "slpng_giants_it/timeline"
+    kwargs:
+      screen_name: slpng_giants_it
+  - frequency: 1440
+    output: "slpng_giants_bg/timeline"
+    kwargs:
+      screen_name: slpng_giants_bg
+  - frequency: 1440
+    output: "slpng_giants_es/timeline"
+    kwargs:
+      screen_name: slpng_giants_es
+  - frequency: 240
+    output: "slpng_giants_oz/timeline"
+    kwargs:
+      screen_name: slpng_giants_oz
 
 #fullarchive_get:
 #  - frequency: 15
@@ -44,47 +88,146 @@
 #  - frequency: 1
 
 free_search:
-  - frequency: 1
-    output: "slpng_giants/mentions"
-    kwargs:
-      q: "@slpng_giants"
-  - frequency: 1
-    output: "slpng_giants/replies"
-    kwargs:
-      q: "to:slpng_giants"
-
-  - frequency: 1
-    output: "slpng_giants_no/mentions"
-    kwargs:
-      q: "@slpng_giants_no"
-  - frequency: 1
-    output: "slpng_giants_no/replies"
-    kwargs:
-      q: "to:slpng_giants_no"
-
-  - frequency: 1
-    output: "slpng_giants_eu/mentions"
-    kwargs:
-      q: "@slpng_giants_eu"
-  - frequency: 1
-    output: "slpng_giants_eu/replies"
-    kwargs:
-      q: "to:slpng_giants_eu"
-
-  - frequency: 1
-    output: "slpng_giants_nz/mentions"
-    kwargs:
-      q: "@slpng_giants_nz"
-  - frequency: 1
-    output: "slpng_giants_nz/replies"
-    kwargs:
-      q: "to:slpng_giants_nz"
-
-  - frequency: 1
-    output: "slpng_giants_ca/mentions"
-    kwargs:
-      q: "@slpng_giants_ca"
-  - frequency: 1
-    output: "slpng_giants_ca/replies"
-    kwargs:
-      q: "to:slpng_giants_ca"
+#  - frequency: 60
+#    output: "slpng_giants/mentions"
+#    kwargs:
+#      q: "@slpng_giants"
+#  - frequency: 60
+#    output: "slpng_giants/replies"
+#    kwargs:
+#      q: "to:slpng_giants"
+#
+#  - frequency: 1440
+#    output: "slpng_giants_no/mentions"
+#    kwargs:
+#      q: "@slpng_giants_no"
+#  - frequency: 1440
+#    output: "slpng_giants_no/replies"
+#    kwargs:
+#      q: "to:slpng_giants_no"
+#
+#  - frequency: 720
+#    output: "slpng_giants_eu/mentions"
+#    kwargs:
+#      q: "@slpng_giants_eu"
+#  - frequency: 720
+#    output: "slpng_giants_eu/replies"
+#    kwargs:
+#      q: "to:slpng_giants_eu"
+#
+#  - frequency: 1440
+#    output: "slpng_giants_nz/mentions"
+#    kwargs:
+#      q: "@slpng_giants_nz"
+#  - frequency: 1440
+#    output: "slpng_giants_nz/replies"
+#    kwargs:
+#      q: "to:slpng_giants_nz"
+#
+#  - frequency: 240
+#    output: "slpng_giants_ca/mentions"
+#    kwargs:
+#      q: "@slpng_giants_ca"
+#  - frequency: 240
+#    output: "slpng_giants_ca/replies"
+#    kwargs:
+#      q: "to:slpng_giants_ca"
+#
+#  - frequency: 240
+#    output: "slpng_giants_fr/mentions"
+#    kwargs:
+#      q: "@slpng_giants_fr"
+#  - frequency: 240
+#    output: "slpng_giants_fr/replies"
+#    kwargs:
+#      q: "to:slpng_giants_fr"
+#
+#  - frequency: 240
+#    output: "slpng_giants_se/mentions"
+#    kwargs:
+#      q: "@slpng_giants_se"
+#  - frequency: 240
+#    output: "slpng_giants_se/replies"
+#    kwargs:
+#      q: "to:slpng_giants_se"
+#
+#  - frequency: 240
+#    output: "slpng_giants_de/mentions"
+#    kwargs:
+#      q: "@slpng_giants_de"
+#  - frequency: 240
+#    output: "slpng_giants_de/replies"
+#    kwargs:
+#      q: "to:slpng_giants_de"
+#
+#  - frequency: 240
+#    output: "slpng_giants_ch/mentions"
+#    kwargs:
+#      q: "@slpng_giants_ch"
+#  - frequency: 240
+#    output: "slpng_giants_ch/replies"
+#    kwargs:
+#      q: "to:slpng_giants_ch"
+#
+#  - frequency: 240
+#    output: "slpng_giants_be/mentions"
+#    kwargs:
+#      q: "@slpng_giants_be"
+#  - frequency: 240
+#    output: "slpng_giants_be/replies"
+#    kwargs:
+#      q: "to:slpng_giants_be"
+#
+#  - frequency: 240
+#    output: "slpng_giants_nl/mentions"
+#    kwargs:
+#      q: "@slpng_giants_nl"
+#  - frequency: 240
+#    output: "slpng_giants_nl/replies"
+#    kwargs:
+#      q: "to:slpng_giants_nl"
+#
+#  - frequency: 240
+#    output: "slpng_giants_br/mentions"
+#    kwargs:
+#      q: "@slpng_giants_br"
+#  - frequency: 240
+#    output: "slpng_giants_br/replies"
+#    kwargs:
+#      q: "to:slpng_giants_br"
+#
+#  - frequency: 240
+#    output: "slpng_giants_it/mentions"
+#    kwargs:
+#      q: "@slpng_giants_it"
+#  - frequency: 240
+#    output: "slpng_giants_it/replies"
+#    kwargs:
+#      q: "to:slpng_giants_it"
+#
+#  - frequency: 240
+#    output: "slpng_giants_bg/mentions"
+#    kwargs:
+#      q: "@slpng_giants_bg"
+#  - frequency: 240
+#    output: "slpng_giants_bg/replies"
+#    kwargs:
+#      q: "to:slpng_giants_bg"
+#
+#  - frequency: 240
+#    output: "slpng_giants_es/mentions"
+#    kwargs:
+#      q: "@slpng_giants_es"
+#  - frequency: 240
+#    output: "slpng_giants_es/replies"
+#    kwargs:
+#      q: "to:slpng_giants_es"
+#
+#  - frequency: 240
+#    output: "slpng_giants_oz/mentions"
+#    kwargs:
+#      q: "@slpng_giants_oz"
+#  - frequency: 240
+#    output: "slpng_giants_oz/replies"
+#    kwargs:
+#      q: "to:slpng_giants_oz"

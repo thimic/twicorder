@@ -18,6 +18,7 @@ class TwiFile(object):
         self.__data = []
 
     def __lt__(self, other):
+        return self.name < other.name
         return os.path.getctime(self.__path) < os.path.getctime(other.__path)
 
     def __str__(self):
@@ -66,7 +67,7 @@ class TwiModel(object):
     def location(self):
         if not self._location:
             # self._location = os.path.expanduser(self._config.get('save_dir'))
-            self._location = os.path.expanduser(os.path.join(self._config.get('save_dir'), 'crawler', 'slpng_giants_timeline'))
+            self._location = os.path.expanduser(os.path.join(self._config.get('save_dir'), 'slpng_giants', 'timeline'))
         return self._location
 
     @location.setter

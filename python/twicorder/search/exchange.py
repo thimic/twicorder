@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import json
-import time
-
 from datetime import datetime
 from queue import Queue
 from threading import Thread
 
-from twicorder.utils import write, Singleton
+from twicorder.utils import Singleton, FileLogger
+
+logger = FileLogger.get()
 
 
 class RateLimitCentral(object, metaclass=Singleton):
@@ -49,12 +48,14 @@ class RateLimitCentral(object, metaclass=Singleton):
 
 
 class RateLimit(object):
+    """
+    Rate limit object, used to describe the limits for a given API end point.
+    """
 
     def __init__(self, headers):
         self._cap = headers.get('x-rate-limit-limit')
         self._remaining = int(headers.get('x-rate-limit-remaining'))
         self._reset = float(headers.get('x-rate-limit-reset'))
-        print(self._reset - time.time())
 
     def __repr__(self):
         reset = datetime.fromtimestamp(self._reset)
@@ -65,23 +66,43 @@ class RateLimit(object):
         return representation
 
     @property
-    def endpoint(self):
-        return self._endpoint
-
-    @property
     def cap(self):
+        """
+        Queries allowed per 15 minutes.
+
+        Returns:
+            int: Number of queries
+
+        """
         return self._cap
 
     @property
     def remaining(self):
+        """
+        Queries left for the current 15 minute window.
+
+        Returns:
+            int: Number of queries
+
+        """
         return self._remaining
 
     @property
     def reset(self):
+        """
+        Time until the current 15 minute window expires.
+
+        Returns:
+            float: Reset time
+
+        """
         return self._reset
 
 
 class QueryWorker(Thread):
+    """
+    Queue thread, used to execute queue queries.
+    """
 
     def __init__(self, *args, **kwargs):
         super(QueryWorker, self).__init__(*args, **kwargs)
@@ -99,20 +120,28 @@ class QueryWorker(Thread):
         return self._query
 
     def run(self):
+        """
+        Fetches query from queue and executes it.
+        """
         while True:
             self._query = self.queue.get()
             if self.query is None:
-                print(f'Terminating thread "{self.name}"')
+                logger.info(f'Terminating thread "{self.name}"')
                 break
-            print(self.query.request_url, self.query.uid)
             while not self.query.done:
-                self.query.run()
-            print(self.query.request_url, len(self.query.results))
+                try:
+                    self.query.run()
+                except Exception:
+                    import traceback
+                    logger.exception(traceback.format_exc())
+                logger.info(self.query.fetch_log())
             self.queue.task_done()
 
 
 class QueryExchange(object):
-
+    """
+    Organises queries in queues and executes them after the FIFO princible.
+    """
     def __init__(self):
         self._queues = {}
         self._threads = {}
@@ -126,6 +155,17 @@ class QueryExchange(object):
         return self._threads
 
     def get_queue(self, endpoint):
+        """
+        Retrieves the queue for the given endpoint if it exists, otherwise
+        creates a queue.
+
+        Args:
+            endpoint (str): API endpoint
+
+        Returns:
+            Queue: Queue for endpoint
+
+        """
         if not self._queues.get(endpoint):
             queue = Queue()
             self._queues[endpoint] = queue
@@ -136,18 +176,29 @@ class QueryExchange(object):
         return self._queues[endpoint]
 
     def add(self, query):
+        """
+        Finds appropriate queue for given end point and adds it.
+
+        Args:
+            query (BaseQuery): Query object
+
+        """
         queue = self.get_queue(query.endpoint)
         if query in queue.queue:
-            print(f'Query with ID {query.uid} is already in the queue.')
+            logger.info(f'Query with ID {query.uid} is already in the queue.')
             return
         thread = self.threads.get(query.endpoint)
         if thread and thread.query == query:
-            print(f'Query with ID {query.uid} is already running.')
+            logger.info(f'Query with ID {query.uid} is already running.')
             return
         queue.put(query)
-        print(queue.queue)
+        logger.info(query)
 
     def wait(self):
+        """
+        Sends shutdown signal to threads and waits for all threads and queues to
+        terminate.
+        """
         for queue in self.queues.values():
             queue.put(None)
         # for queue in self.queues.values():
@@ -159,8 +210,6 @@ class QueryExchange(object):
 if __name__ == '__main__':
     from twicorder.auth import get_auth_handler
     from twicorder.search.queries.request_queries import TimelineQuery
-    from twicorder.utils import write
-
     auth = get_auth_handler()
     accounts = [
         'slpng_giants',

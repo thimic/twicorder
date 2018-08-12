@@ -73,7 +73,7 @@ class TaskManager(object):
         with open(tasks_list, 'r') as stream:
             raw_tasks = yaml.load(stream)
         for query, tasks in raw_tasks.items():
-            for raw_task in tasks:
+            for raw_task in tasks or []:
                 task = Task(
                     name=query,
                     frequency=raw_task.get('frequency') or 15,
