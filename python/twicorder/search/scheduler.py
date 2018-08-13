@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import inspect
+import time
 
 from threading import Thread
 
@@ -29,6 +30,9 @@ class WorkerThread(Thread):
                 if not task.due:
                     continue
                 self._query_exchange.add(self._func(task))
+            # Sleep 1 minute, then wake up and check if any queries are due to
+            # run.
+            time.sleep(60)
 
 
 class Scheduler(object):

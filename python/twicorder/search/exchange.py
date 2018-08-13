@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import time
+
 from datetime import datetime
 from queue import Queue
 from threading import Thread
@@ -135,6 +137,8 @@ class QueryWorker(Thread):
                     import traceback
                     logger.exception(traceback.format_exc())
                 logger.info(self.query.fetch_log())
+                time.sleep(.2)
+            time.sleep(.5)
             self.queue.task_done()
 
 
