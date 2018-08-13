@@ -1,0 +1,4 @@
+
+THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+PARENT_DIR="$( dirname "${THIS_DIR}" )"
+PYTHONPATH=${PARENT_DIR}/python python3 ${PARENT_DIR}/python/twicorder/search/controller.py
