@@ -257,7 +257,7 @@ class RequestQuery(BaseQuery):
                 response = request(self.request_url)
         except Exception:
             self.log(traceback.format_exc())
-            return
+            raise
 
         # Check query response code. Return with error message if not a
         # successful 200 code.
