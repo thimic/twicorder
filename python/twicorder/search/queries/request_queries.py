@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import copy
 import urllib
 
 from datetime import datetime, timedelta
+from threading import Lock
 
 from twicorder.utils import collect_key_values, Singleton
 from twicorder.search.queries import RequestQuery
@@ -50,6 +52,7 @@ class CachedUserCentral(object, metaclass=Singleton):
     def __init__(self):
         self._users = {}
         self._cache_life = timedelta(minutes=15)
+        self.lock = Lock()
 
     def add(self, user):
         self._users[user['id']] = CachedUser(user)
@@ -76,33 +79,34 @@ class CachedUserCentral(object, metaclass=Singleton):
             list[dict]: List of tweets with expanded user mentions
 
         """
-        self.filter()
-        missing_users = set([])
-        for tweet in tweets:
-            for user in collect_key_values('user', tweet):
-                self.add(user)
-            mention_sections = collect_key_values('user_mentions', tweet)
-            for mention_section in mention_sections:
-                for mention in mention_section:
-                    if not mention['id'] in self.users:
-                        missing_users.add(mention['id'])
-        if not missing_users:
-            return
-        missing_users = list(missing_users)
-        n = 100
-        chunks = [
-            missing_users[i:i + n] for i in range(0, len(missing_users), n)
-        ]
-        for chunk in chunks:
-            UserQuery(user_id=','.join([str(u) for u in chunk])).run()
-        for tweet in tweets:
-            mention_sections = collect_key_values('user_mentions', tweet)
-            for mention_section in mention_sections:
-                for mention in mention_section:
-                    full_user = self.users.get(mention['id'])
-                    if not full_user:
-                        continue
-                    mention.update(full_user.data)
+        with self.lock:
+            self.filter()
+            missing_users = set([])
+            for tweet in tweets:
+                for user in collect_key_values('user', tweet):
+                    self.add(user)
+                mention_sections = collect_key_values('user_mentions', tweet)
+                for mention_section in mention_sections:
+                    for mention in mention_section:
+                        if not mention['id'] in self.users:
+                            missing_users.add(mention['id'])
+            if not missing_users:
+                return
+            missing_users = list(missing_users)
+            n = 100
+            chunks = [
+                missing_users[i:i + n] for i in range(0, len(missing_users), n)
+            ]
+            for chunk in chunks:
+                UserQuery(user_id=','.join([str(u) for u in chunk])).run()
+            for tweet in tweets:
+                mention_sections = collect_key_values('user_mentions', tweet)
+                for mention_section in mention_sections:
+                    for mention in mention_section:
+                        full_user = self.users.get(mention['id'])
+                        if not full_user:
+                            continue
+                        mention.update(full_user.data)
         return tweets
 
 
