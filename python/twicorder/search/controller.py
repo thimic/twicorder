@@ -20,12 +20,14 @@ class Twicorder(object):
 
 
 if __name__ == '__main__':
-    while True:
-        try:
-            twicorder = Twicorder()
-            twicorder.run()
-        except Exception:
-            logger.exception(traceback.format_exc())
-            logger.critical('A fatal error occured. Restarting TwiCorder.')
-        time.sleep(10)
+    twicorder = Twicorder()
+    twicorder.run()
+    # while True:
+    #     try:
+    #         twicorder = Twicorder()
+    #         twicorder.run()
+    #     except Exception:
+    #         logger.exception(traceback.format_exc())
+    #         logger.critical('A fatal error occured. Restarting TwiCorder.')
+    #     time.sleep(10)
 
