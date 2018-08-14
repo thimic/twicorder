@@ -244,20 +244,27 @@ class RequestQuery(BaseQuery):
             time.sleep(sleep_time)
 
         # Perform query
-        try:
-            if self._token_auth:
-                request = getattr(requests, self.request_type)
-                response = request(
-                    self.request_url,
-                    data=json.dumps(self.kwargs),
-                    auth=TokenAuth()
-                )
+        attempts = 0
+        while True:
+            try:
+                if self._token_auth:
+                    request = getattr(requests, self.request_type)
+                    response = request(
+                        self.request_url,
+                        data=json.dumps(self.kwargs),
+                        auth=TokenAuth()
+                    )
+                else:
+                    request = getattr(Auth().oauth, self.request_type)
+                    response = request(self.request_url)
+            except Exception:
+                attempts += 1
+                self.log(traceback.format_exc())
+                time.sleep(2**attempts)
+                if attempts >= 5:
+                    break
             else:
-                request = getattr(Auth().oauth, self.request_type)
-                response = request(self.request_url)
-        except Exception:
-            self.log(traceback.format_exc())
-            raise
+                break
 
         # Check query response code. Return with error message if not a
         # successful 200 code.

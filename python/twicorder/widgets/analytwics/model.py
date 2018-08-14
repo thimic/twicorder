@@ -24,7 +24,7 @@ class TweetLoader(QtCore.QThread):
         tweet_dir = os.path.expanduser(config.get('save_dir'))
         prefix = config.get('save_prefix')
         glob_pattern = '{}*'.format(os.path.join(tweet_dir, prefix))
-        glob_pattern = '{}/*'.format(os.path.join(tweet_dir, 'slpng_giants', 'mentions'))
+        glob_pattern = os.path.expanduser('~/Desktop/slpng_giants*.txt')
         print(glob_pattern)
         paths = glob.glob(glob_pattern)
         self.loading_started.emit(len(paths))

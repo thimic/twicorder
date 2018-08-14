@@ -67,7 +67,7 @@ class TwiModel(object):
     def location(self):
         if not self._location:
             # self._location = os.path.expanduser(self._config.get('save_dir'))
-            self._location = os.path.expanduser(os.path.join(self._config.get('save_dir'), 'slpng_giants', 'timeline'))
+            self._location = os.path.expanduser('~/Desktop')
         return self._location
 
     @location.setter

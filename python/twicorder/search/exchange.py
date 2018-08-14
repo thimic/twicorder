@@ -136,7 +136,7 @@ class QueryWorker(Thread):
                 except Exception:
                     import traceback
                     logger.exception(traceback.format_exc())
-                    raise
+                    break
                 logger.info(self.query.fetch_log())
                 time.sleep(.2)
             time.sleep(.5)
