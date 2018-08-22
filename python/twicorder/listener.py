@@ -209,7 +209,7 @@ class TwicorderListener(StreamListener):
         file_path = os.path.join(self.save_dir, self.file_name)
         data = json.loads(json_data)
         if data.get('created_at'):
-            users = utils.find_key('user', data)
+            users = utils.collect_key_values('user', data)
             for user in users:
                 user['recorded_at'] = data['created_at']
                 self.users[user['id_str']] = user
