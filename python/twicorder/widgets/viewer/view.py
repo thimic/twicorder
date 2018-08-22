@@ -44,7 +44,7 @@ class TwiTweetItem(QtWidgets.QListWidgetItem):
         self.__widget = uic.loadUi(os.path.join(THIS_DIR, 'ui', 'tweetitem.ui'))
         self.__widget.name_label.setText(tweet['user'].get('name', 'N/A'))
         self.__widget.handle_label.setText('@{}'.format(tweet['user'].get('screen_name')))
-        self.__widget.tweet_label.setText(tweet.get('text'))
+        self.__widget.tweet_label.setText(tweet.get('text', tweet.get('full_text')))
         self.__widget.time_label.setText('{:%a %-d %b %H:%M}'.format(timestamp_local))
 
         self.setSizeHint(self.__widget.size())

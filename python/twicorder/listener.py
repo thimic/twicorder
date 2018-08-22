@@ -79,7 +79,10 @@ class TwicorderListener(StreamListener):
             str: Path to save location for captured data
 
         """
-        return os.path.expanduser(self.config['save_dir'])
+        save_dir = os.path.expanduser(
+            os.path.join(self.config['save_dir'], 'stream')
+        )
+        return save_dir
 
     @property
     def save_prefix(self):
