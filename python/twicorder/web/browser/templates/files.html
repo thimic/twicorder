@@ -1,0 +1,33 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Twicorder</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" media="screen">
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+     </head>
+     <body>
+        <div class="container">
+            <h1>{{ path or 'Twicorder' }} ({{ files|length }})</h1>
+            <table class="table table-striped ">
+                <thead>
+                    <tr>
+                        <td>Name</td>
+                        <td>Date</td>
+                        <td>Size</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file, data in files.items() %}
+                    <tr>
+                        <td><span class="{{ data.icon }}" aria-hidden="true"></span>&nbsp;&nbsp;&nbsp;<a href="{{ url_for('index', req_path=[path, file]|join('/')) }}">{{ file }}</a></td>
+                        <td style="text-align: right">{{ data.timestamp.strftime('%d %b %Y %H:%M:%S') }}</td>
+                        <td style="text-align: right">{{ data.size }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+     </body>
+</html>

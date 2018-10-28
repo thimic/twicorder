@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Twicorder</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" media="screen">
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+     </head>
+     <body>
+        <div class="container">
+        <h1>{{endpoint}} ({{tweets|length}})</h1>
+        {% for t in tweets %}
+ <!--           <div class="media">
+                <div class="media-left">
+                    <a href="https://twitter.com/{{ t.user.screen_name }}">
+                    <img class="media-object" src="{{ t.user.profile_image_url_https }}" alt="https://via.placeholder.com/64">
+                    </a>
+                </div>
+                <div class="media-body">
+                  <h4 class="media-heading">{{ t.user.name }}</h4>
+                  {{ t.full_text|replace('\n', '<br/>')|safe|urlize(target='_blank') if t.full_text else t.text|replace('\n', '<br/>')|safe|urlize(target='_blank') }}
+                </div>
+            </div>-->
+            <div class="tweet">
+            <div style="float: left; margin-right: 1em;"><img src="{{ t.user.profile_image_url_https }}"></div>
+            <div>
+                <strong>{{t.user.name}}</strong>
+                <span class="screen-name">@{{t.user.screen_name}}</span>
+                <span class="timestamp">{{t.created_at.strftime('%d %b %Y %H:%M')}}</span>
+            </div>
+            <div class="full-text">{{t.full_text|replace('\n', '<br/>')|safe|urlize(target='_blank') if t.full_text else t.text|replace('\n', '<br/>')|safe|urlize(target='_blank')}}</div>
+            </div>
+        {% endfor %}
+        </div>
+        <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+        <script src="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+    </body>
+</html>
