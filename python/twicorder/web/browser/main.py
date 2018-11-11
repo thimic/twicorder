@@ -51,6 +51,34 @@ def format_tweet(tweet_data):
     return tweet_data
 
 
+@app.route('/raw', defaults={'req_path': ''})
+@app.route('/raw/<path:req_path>')
+def raw(req_path):
+    base_dir = Config.get()['save_dir']
+
+    # Joining the base and the requested path
+    rel_path, tweet_id = req_path.split(':')
+    abs_path = os.path.expanduser(os.path.join(base_dir, rel_path))
+
+    # Return 404 if path doesn't exist
+    if not os.path.exists(abs_path):
+        return abort(404)
+
+    found_tweet = None
+    for line in readlines(abs_path):
+        tweet = json.loads(line)
+        if tweet.get('id_str') == tweet_id:
+            found_tweet = tweet
+            break
+
+    if not found_tweet:
+        return abort(404)
+
+    tweet_json = json.dumps(found_tweet, indent=4)
+
+    return render_template('raw_tweet.html', raw_tweet=tweet_json)
+
+
 @app.route('/', defaults={'req_path': ''})
 @app.route('/<path:req_path>')
 def index(req_path):
@@ -76,7 +104,8 @@ def index(req_path):
         return render_template(
             'tweets.html',
             endpoint=os.path.dirname(req_path),
-            tweets=tweets
+            tweets=tweets,
+            filename=req_path
         )
 
     # Show directory contents
