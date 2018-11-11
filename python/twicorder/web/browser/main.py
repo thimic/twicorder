@@ -57,7 +57,7 @@ def index(req_path):
     base_dir = Config.get()['save_dir']
 
     # Joining the base and the requested path
-    abs_path = os.path.join(base_dir, req_path)
+    abs_path = os.path.expanduser(os.path.join(base_dir, req_path))
 
     # Return 404 if path doesn't exist
     if not os.path.exists(abs_path):
@@ -66,6 +66,10 @@ def index(req_path):
     # Check if path is a file and serve
     if os.path.isfile(abs_path):
         tweets = [json.loads(l) for l in readlines(abs_path)]
+
+        # Filter out lines not containing tweets, such as delete messages.
+        tweets = [t for t in tweets if t.get('id')]
+
         for t in tweets:
             format_tweet(t)
 

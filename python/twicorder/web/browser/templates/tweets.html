@@ -22,10 +22,11 @@
                 </div>
             </div>-->
             <div class="tweet">
-            <div style="float: left; margin-right: 1em;"><img src="{{ t.user.profile_image_url_https }}"></div>
+                <div style="float: left; margin-right: 1em;"><a href="https://twitter.com/{{t.user.screen_name}}" target="_blank"><img src="{{ t.user.profile_image_url_https }}"></a></div>
             <div>
                 <strong>{{t.user.name}}</strong>
-                <span class="screen-name">@{{t.user.screen_name}}</span>
+                <span class="screen-name"><a class="screen-name" href="https://twitter.com/{{t.user.screen_name}}" target="_blank">@{{t.user.screen_name}}</a></span>
+                <a id="tweet-url" href="https://twitter.com/statuses/{{t.id_str}}" target="_blank"><span class="glyphicon glyphicon-link" aria-hidden="true"></span></a>
                 <span class="timestamp">{{t.created_at.strftime('%d %b %Y %H:%M')}}</span>
             </div>
             <div class="full-text">{{t.full_text|replace('\n', '<br/>')|safe|urlize(target='_blank') if t.full_text else t.text|replace('\n', '<br/>')|safe|urlize(target='_blank')}}</div>

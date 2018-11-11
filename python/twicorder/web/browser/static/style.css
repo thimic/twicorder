@@ -46,13 +46,27 @@ img:after {
     margin-top: 1em;
 }
 
-.screen-name {
+.screen-name, .screen-name:link {
     color: grey;
+}
+
+.screen-name:hover {
+    color: #2a6496;
 }
 
 .timestamp {
     float: right;
     color: grey;
+}
+
+#tweet-url {
+    float: right;
+    color: grey;
+    padding-left: .5em;
+}
+
+#tweet-url:hover {
+    color: #2a6496;
 }
 
 .full-text {
