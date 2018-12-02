@@ -1,40 +1,60 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>Twicorder</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" media="screen">
-        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-     </head>
-     <body>
-        <div class="container">
-        <h1>{{endpoint}} ({{tweets|length}})</h1>
-        {% for t in tweets %}
- <!--           <div class="media">
-                <div class="media-left">
-                    <a href="https://twitter.com/{{ t.user.screen_name }}">
-                    <img class="media-object" src="{{ t.user.profile_image_url_https }}" alt="https://via.placeholder.com/64">
-                    </a>
-                </div>
-                <div class="media-body">
-                  <h4 class="media-heading">{{ t.user.name }}</h4>
-                  {{ t.full_text|replace('\n', '<br/>')|safe|urlize(target='_blank') if t.full_text else t.text|replace('\n', '<br/>')|safe|urlize(target='_blank') }}
-                </div>
-            </div>-->
-            <div class="tweet">
-                <div style="float: left; margin-right: 1em;"><a href="https://twitter.com/{{t.user.screen_name}}" target="_blank"><img src="{{ t.user.profile_image_url_https }}"></a></div>
-            <div>
-                <strong>{{t.user.name}}</strong>
-                <span class="screen-name"><a class="screen-name" href="https://twitter.com/{{t.user.screen_name}}" target="_blank">@{{t.user.screen_name}}</a></span>
-                <a id="tweet-url" href="{{ url_for('raw', req_path=filename + ':' + t.id_str) }}" target="_blank"><span class="glyphicon glyphicon-download" aria-hidden="true"></span></a>
-                <a id="tweet-url" href="https://twitter.com/statuses/{{t.id_str}}" target="_blank"><span class="glyphicon glyphicon-link" aria-hidden="true"></span></a>
-                <span class="timestamp">{{t.created_at.strftime('%d %b %Y %H:%M')}}</span>
-            </div>
-            <div class="full-text">{{t.full_text|replace('\n', '<br/>')|safe|urlize(target='_blank') if t.full_text else t.text|replace('\n', '<br/>')|safe|urlize(target='_blank')}}</div>
-            </div>
-        {% endfor %}
+{% extends "base.html" %}
+
+{% block scripts %}
+    {{ super() }}
+    <script>
+    $('#reverse').on('click', function() {
+      // get reversed array of elements
+      var el = $('#tweet-list li').get().reverse();
+
+      // re-append them to their parent
+      $('#tweet-list').append(el);
+    });
+    </script>
+{% endblock %}
+
+{% block app_content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+            <button id="reverse" type="button" class="btn btn-primary pull-right">Reverse</button>
         </div>
-        <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
-        <script src="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
-    </body>
-</html>
+    </div>
+    <div class="row row-m-t">
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+            <ul id="tweet-list" class="list-unstyled">
+            {% for t in items %}
+                <li class="media">
+                    <div class="media-left">
+                        <a href="https://twitter.com/{{ t.user.screen_name }}" target="_blank">
+                            <img class="media-object img-circle" src="{{ t.user.profile_image_url_https }}" onerror="this.onerror=null;this.src='//via.placeholder.com/48?text=N/A';">
+                        </a>
+                    </div>
+                    <div class="media-body">
+                        <div class="pull-right">
+                            <span class="timestamp" id="time_{{ t.id_str }}"></span>
+                            <script>
+                                var elem = document.getElementById("time_{{ t.id_str }}")
+                                var now = new Date({{ t.created_at|date_to_millis }});
+                                var options = { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute:'2-digit' }
+                                elem.innerHTML = now.toLocaleString([], options);
+                            </script>
+                            <a href="https://twitter.com/statuses/{{t.id_str}}" target="_blank"><span class="glyphicon glyphicon-link" aria-hidden="true"></span></a>
+                            <a href="{{ url_for('raw', req_path=filename + ':' + t.id_str) }}" target="_blank"><span class="glyphicon glyphicon-download" aria-hidden="true"></span></a>
+                        </div>
+                        <div>
+                            <span class="full-name">{{ t.user.name }}</span>
+                            <a class="screen-name" href="https://twitter.com/{{t.user.screen_name}}" target="_blank">@{{t.user.screen_name}}</a>
+                        </div>
+                        <div>
+                            {{ t.full_text|replace('\n', '<br/>')|safe|urlize(target='_blank') if t.full_text else t.text|replace('\n', '<br/>')|safe|urlize(target='_blank') }}
+                        </div>
+                        <hr>
+                    </div>
+                </li>
+            {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

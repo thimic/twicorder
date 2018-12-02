@@ -111,3 +111,7 @@ thumbs.db
 
 # Sandbox tests
 python/twicorder/sandbox/
+
+# Migrations
+migrations/
+twicorder.db
