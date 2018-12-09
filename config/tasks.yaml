@@ -6,6 +6,12 @@
 #      cursor: -1
 #      count: 20
 
+status:
+  - frequency: 10080
+    output: "status/slpng_giants"
+    kwargs:
+      id:
+
 user_timeline:
   - frequency: 60
     output: "slpng_giants/timeline"

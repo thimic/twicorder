@@ -1,7 +1,7 @@
 
 # Save location, file name and extension for collected data
 # save_dir: "~/Dropbox/Projects/SMC/SleepingGiants"
-save_dir: "~/Dropbox/Apps/Twicorder/sleeping_giants"
+save_dir: "~/Desktop/delete"
 save_prefix: "slpng_giants_"
 save_postfix: ".txt"
 
