@@ -4,6 +4,7 @@
 import json
 import os
 import time
+import copy
 
 from datetime import datetime, timedelta, timezone
 
@@ -11,6 +12,7 @@ from tweepy import Stream
 from tweepy.api import API
 from tweepy.streaming import StreamListener
 
+from twicorder import mongo
 from twicorder import utils
 from twicorder.auth import get_auth_handler
 from twicorder.config import Config
@@ -33,6 +35,7 @@ class TwicorderListener(StreamListener):
         self._data = []
         self._users = {}
         self._file_name = None
+        self._mongo_collection = mongo.create_collection()
 
     @property
     def config(self):
@@ -134,6 +137,17 @@ class TwicorderListener(StreamListener):
             self._file_name = self.save_prefix + now + self.save_postfix
         return self._file_name
 
+    @property
+    def mongo_collection(self):
+        """
+        MongoDB collection to record tweets in.
+
+        Returns:
+            pymongo.Collection: MongoDB collection
+
+        """
+        return self._mongo_collection
+
     @staticmethod
     def extract_extended(data):
         """
@@ -215,6 +229,16 @@ class TwicorderListener(StreamListener):
                 self.users[user['id_str']] = user
             if self.config.get('full_user_mentions', False):
                 self.update_mentions(data)
+
+            # Add tweet to MongoDB
+            mongo_data = copy.deepcopy(data)
+            mongo_data = utils.timestamp_to_datetime(mongo_data)
+            mongo_data = utils.stream_to_search(mongo_data)
+            self.mongo_collection.replace_one(
+                {'id': mongo_data['id']},
+                mongo_data,
+                upsert=True
+            )
         self._data.append(data)
         utils.write(json.dumps(data) + '\n', file_path)
         timestamp = '{:%d %b %Y %H:%M:%S}'.format(datetime.now())
@@ -262,7 +286,6 @@ class TwicorderStream(Stream):
         self.filter(
             follow=self.follow,
             track=self.track,
-            async=self.async,
             locations=self.locations,
             stall_warnings=self.stall_warnings,
             languages=self.languages,
@@ -299,10 +322,6 @@ class TwicorderStream(Stream):
     @property
     def follow(self):
         return self.config.get('follow')
-
-    @property
-    def async(self):
-        return self.config.get('async', False)
 
     @property
     def locations(self):

@@ -12,11 +12,12 @@ import urllib
 
 from datetime import datetime
 
+from twicorder import mongo
 from twicorder.auth import Auth, TokenAuth
 from twicorder.config import Config
 from twicorder.constants import TW_TIME_FORMAT
 from twicorder.search.exchange import RateLimitCentral
-from twicorder.utils import write, AppData
+from twicorder.utils import write, AppData, timestamp_to_datetime
 
 
 class BaseQuery(object):
@@ -27,6 +28,8 @@ class BaseQuery(object):
     _last_return_token = None
     _results_path = None
     _fetch_more_path = None
+
+    _mongo_collection = mongo.create_collection()
 
     def __init__(self, output=None, **kwargs):
         self._done = False
@@ -108,6 +111,10 @@ class BaseQuery(object):
     def results(self):
         return self._results
 
+    @property
+    def mongo_collection(self):
+        return self._mongo_collection
+
     def run(self):
         raise NotImplementedError
 
@@ -135,6 +142,17 @@ class BaseQuery(object):
         results_str = '\n'.join(json.dumps(r) for r in self._results)
         write(f'{results_str}\n', file_path)
         self.log(f'Wrote {len(self.results)} tweets to "{file_path}"')
+
+        # Write to Mongo
+        for result in self._results:
+            data = copy.deepcopy(result)
+            data = timestamp_to_datetime(data)
+            self.mongo_collection.replace_one(
+                {'id': data['id']},
+                data,
+                upsert=True
+            )
+        self.log(f'Wrote {len(self.results)} tweets to MongoDB')
 
     def pickle(self):
         """

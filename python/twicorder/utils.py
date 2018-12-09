@@ -6,11 +6,12 @@ import os
 import sqlite3
 import sys
 
+from datetime import datetime
 from gzip import GzipFile
 from logging import FileHandler, StreamHandler
 
 from twicorder.constants import (
-    REGULAR_EXTENSIONS, COMPRESSED_EXTENSIONS, USER_DIR
+    REGULAR_EXTENSIONS, COMPRESSED_EXTENSIONS, USER_DIR, TW_TIME_FORMAT
 )
 
 
@@ -313,3 +314,52 @@ def flatten(l):
 
     """
     return [item for sublist in l for item in sublist]
+
+
+def timestamp_to_datetime(data):
+    """
+    Traverse dictionary and convert all instances of time stamp strings into
+    datetime objects.
+
+    Args:
+        data (dict): Tweet dictionary
+
+    Returns:
+        dict: Updated tweet dictionary
+
+    """
+    for key, value in data.items():
+        if key in ['created_at', 'recorded_at'] and isinstance(value, str):
+            data[key] = datetime.strptime(value, TW_TIME_FORMAT)
+        elif isinstance(value, dict):
+            data[key] = timestamp_to_datetime(value)
+        elif isinstance(value, list):
+            data[key] = [timestamp_to_datetime(v) for v in value if isinstance(v, dict)]
+    return data
+
+
+def stream_to_search(data):
+    """
+    Conform tweet dictionaries collected from the streaming API to the format of
+    tweets collected from the search API.
+
+    Args:
+        data (dict): Tweet dictionary
+
+    Returns:
+        dict: Updated tweet dictionary
+
+    """
+    extended_tweet = data.get('extended_tweet')
+    if extended_tweet:
+        data.pop('extended_tweet')
+        data.update(extended_tweet)
+        data['truncated'] = False
+        data.pop('text')
+    else:
+        if data.get('text'):
+            data['full_text'] = data.pop('text')
+    for key, value in data.items():
+        if key in ['retweeted_status', 'quoted_status']:
+            data[key] = stream_to_search(value)
+    return data

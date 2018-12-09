@@ -129,6 +129,23 @@ class UserQuery(RequestQuery):
             CachedUserCentral().add(user)
 
 
+class StatusQuery(RequestQuery):
+
+    _name = 'status'
+    _endpoint = '/statuses/lookup'
+
+    def __init__(self, output=None, **kwargs):
+        super(StatusQuery, self).__init__(output, **kwargs)
+        self._kwargs['tweet_mode'] = 'extended'
+        self._kwargs['include_entities'] = 'true'
+        self._kwargs['trim_user'] = 'false'
+        self._kwargs.update(kwargs)
+
+    def save(self):
+        for status in self.results:
+            pass
+
+
 class TimelineQuery(RequestQuery):
 
     _name = 'user_timeline'
