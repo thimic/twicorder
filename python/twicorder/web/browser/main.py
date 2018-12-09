@@ -2,8 +2,13 @@
 # -*- coding: utf-8 -*-
 
 from twicorder.web.browser import app
+from twicorder.utils import FileLogger
 
 
 if __name__ == '__main__':
-    app.run('localhost')
+    try:
+        app.run('localhost')
+    except Exception:
+        logger = FileLogger.get()
+        logger.exception('TwiBrowser Error: ')
 
