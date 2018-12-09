@@ -50,12 +50,12 @@ def create_collection(db_name='slpng_giants', collection_name='tweets'):
     return collection
 
 
-def backfill(db_name='slpng_giants', collection_name='tweets'):
+def backfill(path=None, db_name='slpng_giants', collection_name='tweets'):
     logger = utils.FileLogger.get()
     tweets = create_collection(db_name, collection_name)
 
     config = Config.get()
-    save_dir = os.path.expanduser(config['save_dir'])
+    save_dir = os.path.expanduser(path or config['save_dir'])
 
     paths = glob.glob(os.path.join(save_dir, '**', '*.t*'), recursive=True)
     t0 = datetime.now()
