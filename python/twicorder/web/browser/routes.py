@@ -12,11 +12,13 @@ from flask_login import current_user, login_required, login_user, logout_user
 from twicorder import mongo
 from twicorder.config import Config
 from twicorder.constants import TW_TIME_FORMAT
-from twicorder.utils import readlines
+from twicorder.utils import readlines, FileLogger
 from twicorder.web.browser import app, db
 from twicorder.web.browser.forms import LoginForm, RegistrationForm
 from twicorder.web.browser.models import User
 from werkzeug.urls import url_parse
+
+logger = FileLogger.get()
 
 
 def sizeof_fmt(num, suffix='B'):
@@ -103,31 +105,35 @@ def register():
 @app.route('/stats')
 @login_required
 def stats():
-    collection = mongo.create_collection()
-    data = {
-        'All Tweets': collection.count(),
-    }
-    accounts = {
-        'slpng_giants',
-        'slpng_giants_be',
-        'slpng_giants_bg',
-        'slpng_giants_br',
-        'slpng_giants_ca',
-        'slpng_giants_ch',
-        'slpng_giants_de',
-        'slpng_giants_es',
-        'slpng_giants_eu',
-        'slpng_giants_fr',
-        'slpng_giants_it',
-        'slpng_giants_nl',
-        'slpng_giants_no',
-        'slpng_giants_nz',
-        'slpng_giants_oz',
-        'slpng_giants_se',
-    }
-    for account in sorted(accounts):
-        data[f'@{account}'] = collection.find({'user.screen_name': account}).count()
-    return render_template('stats.html', title='Stats', data=data)
+    try:
+        collection = mongo.create_collection()
+        data = {
+            'All Tweets': collection.count(),
+        }
+        accounts = {
+            'slpng_giants',
+            'slpng_giants_be',
+            'slpng_giants_bg',
+            'slpng_giants_br',
+            'slpng_giants_ca',
+            'slpng_giants_ch',
+            'slpng_giants_de',
+            'slpng_giants_es',
+            'slpng_giants_eu',
+            'slpng_giants_fr',
+            'slpng_giants_it',
+            'slpng_giants_nl',
+            'slpng_giants_no',
+            'slpng_giants_nz',
+            'slpng_giants_oz',
+            'slpng_giants_se',
+        }
+        for account in sorted(accounts):
+            data[f'@{account}'] = collection.find({'user.screen_name': account}).count()
+        return render_template('stats.html', title='Stats', data=data)
+    except Exception:
+        logger.exception('TwiBrowser stats error: ')
+        return redirect(url_for('index'))
 
 
 @app.route('/raw', defaults={'req_path': ''})
