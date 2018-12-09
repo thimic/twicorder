@@ -130,7 +130,7 @@ def stats():
         }
         for account in sorted(accounts):
             data[f'@{account}'] = collection.find({'user.screen_name': account}).count()
-        return render_template('stats.html', title='Stats', data=data)
+        return render_template('stats.html', title='Stats', data=data, nav='/stats')
     except Exception:
         logger.exception('TwiBrowser stats error: ')
         return redirect(url_for('index'))
