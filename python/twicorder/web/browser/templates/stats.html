@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block scripts %}
+    {{ super() }}
+    <script>
+    $(document).ready( function () {
+        $('#stats_table').DataTable(
+            {
+                "pageLength": 25,
+                "responsive": true
+            }
+        );
+    } );
+    </script>
+{% endblock %}
+
+{% block app_content %}
+<div class="jumbotron">
+  <h1>Twicorder Stats</h1>
+  <p>{{data['All Tweets']}} tweets and counting</p>
+</div>
+<div class="container">
+    <table id="stats_table" class="table table-striped">
+        <thead >
+            <tr>
+                <td>From account</td>
+                <td>Count</td>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in data|dictsort(by='value', reverse=True) %}
+            <tr>
+                <td>{{ item[0] }}</td>
+                <td>{{ item[1] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

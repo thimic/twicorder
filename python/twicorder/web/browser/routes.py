@@ -9,6 +9,7 @@ from datetime import datetime
 
 from flask import abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
+from twicorder import mongo
 from twicorder.config import Config
 from twicorder.constants import TW_TIME_FORMAT
 from twicorder.utils import readlines
@@ -97,6 +98,36 @@ def register():
         flash('Congratulations, you are now a registered user!')
         return redirect(url_for('login'))
     return render_template('register.html', title='Register', form=form)
+
+
+@app.route('/stats')
+@login_required
+def stats():
+    collection = mongo.create_collection()
+    data = {
+        'All Tweets': collection.count(),
+    }
+    accounts = {
+        'slpng_giants',
+        'slpng_giants_be',
+        'slpng_giants_bg',
+        'slpng_giants_br',
+        'slpng_giants_ca',
+        'slpng_giants_ch',
+        'slpng_giants_de',
+        'slpng_giants_es',
+        'slpng_giants_eu',
+        'slpng_giants_fr',
+        'slpng_giants_it',
+        'slpng_giants_nl',
+        'slpng_giants_no',
+        'slpng_giants_nz',
+        'slpng_giants_oz',
+        'slpng_giants_se',
+    }
+    for account in sorted(accounts):
+        data[f'@{account}'] = collection.find({'user.screen_name': account}).count()
+    return render_template('stats.html', title='Stats', data=data)
 
 
 @app.route('/raw', defaults={'req_path': ''})
