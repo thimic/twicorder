@@ -9,6 +9,7 @@ from datetime import datetime
 
 from flask import abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
+from subprocess import check_output
 from twicorder import mongo
 from twicorder.config import Config
 from twicorder.constants import TW_TIME_FORMAT
@@ -51,6 +52,24 @@ def format_tweet(tweet_data):
     if tweet_data.get('full_text'):
         tweet_data['full_text'] = urlize(tweet_data['full_text'])
     return tweet_data
+
+
+def systemd_status(daemon):
+    status_pattern = re.compile(r'Active: (?P<status>active|inactive)')
+    raw_out = check_output(['systemctl', 'status', daemon]).decode()
+    match = status_pattern.search(raw_out)
+    if not match:
+        return
+    return match.groupdict()['status']
+
+
+def crawler_status():
+    status = {
+        'Backup': systemd_status('stashbox'),
+        'Streaming': systemd_status('twicorder-listener'),
+        'Search': systemd_status('twicorder')
+    }
+    return status
 
 
 @app.template_filter('date_to_millis')
@@ -219,5 +238,6 @@ def index(req_path):
         title=f'{req_path or "root"} ({len(files)})',
         nav=req_path,
         items=files,
-        path=req_path
+        path=req_path,
+        status=crawler_status()
     )
