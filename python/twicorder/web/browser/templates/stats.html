@@ -28,10 +28,10 @@
             </tr>
         </thead>
         <tbody>
-            {% for item in data %}
+            {% for key, value in data.items() %}
             <tr>
-                <td>{{ item[0] }}</td>
-                <td>{{ item[1] }}</td>
+                <td>{{ key }}</td>
+                <td>{{ value }}</td>
             </tr>
             {% endfor %}
         </tbody>
