@@ -157,7 +157,8 @@ def stats():
         counter = Counter()
         for tweet in collection.find({"user.screen_name": 'slpng_giants'}):
             try:
-                counter['Date({created_at:%Y, %m, %d})'.format(**tweet)] += 1
+                d = tweet['created_at']
+                counter[f'Date({d.year}, {d.month - 1}, {d.day})'] += 1
             except Exception:
                 continue
         date_count = sorted([f'[ new {k}, {v} ],' for k, v in counter.items()])
