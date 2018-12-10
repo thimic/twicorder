@@ -123,6 +123,9 @@ def register():
 @app.route('/stats')
 @login_required
 def stats():
+
+    from collections import Counter
+
     try:
         collection = mongo.create_collection()
         data = {
@@ -150,7 +153,15 @@ def stats():
             data[f'@{account}'] = (
                 f'{collection.find({"user.screen_name": account}).count():,}'
             )
-        return render_template('stats.html', title='Stats', data=data)
+
+        counter = Counter()
+        for tweet in collection.find({"user.screen_name": account}):
+            try:
+                counter['Date({created_at:%Y, %m, %d})'.format(**tweet)] += 1
+            except Exception:
+                continue
+        date_count = [f'[ new {k}, {v} ],' for k, v in counter.items()]
+        return render_template('stats.html', title='Stats', data=data, date_count='\n'.join(date_count))
     except Exception:
         logger.exception('TwiBrowser stats error: ')
         return redirect(url_for('index'))
@@ -238,5 +249,4 @@ def index(req_path):
         nav=req_path,
         items=files,
         path=req_path,
-        status=crawler_status()
     )
