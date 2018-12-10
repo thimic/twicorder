@@ -24,14 +24,14 @@
         <thead >
             <tr>
                 <td>From account</td>
-                <td>Count</td>
+                <td style="text-align: right">Count</td>
             </tr>
         </thead>
         <tbody>
             {% for key, value in data.items() %}
             <tr>
                 <td>{{ key }}</td>
-                <td>{{ value }}</td>
+                <td style="text-align: right">{{ value }}</td>
             </tr>
             {% endfor %}
         </tbody>

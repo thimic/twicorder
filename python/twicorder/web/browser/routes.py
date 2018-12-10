@@ -108,7 +108,7 @@ def stats():
     try:
         collection = mongo.create_collection()
         data = {
-            'All Tweets': collection.count(),
+            'All Tweets': f'{collection.count():,}',
         }
         accounts = {
             'slpng_giants',
