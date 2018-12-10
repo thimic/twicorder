@@ -47,6 +47,7 @@
                     {% if status %}
                     {% for item in status|dictsort %}
                     <li>{{ item[0] }}: {{ item[1] }}</li>
+                    {% endfor %}
                     {% endif %}
                     {% if current_user.is_anonymous %}
                     <li><a href="{{ url_for('login') }}">Login</a></li>
