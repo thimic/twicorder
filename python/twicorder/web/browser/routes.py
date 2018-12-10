@@ -77,7 +77,7 @@ def login():
         if not next_page or url_parse(next_page).netloc != '':
             next_page = url_for('index')
         return redirect(next_page)
-    return render_template('login.html', title='Sign In', form=form)
+    return render_template('login.html', title='Sign In', form=form, nav='')
 
 
 @app.route('/logout')
@@ -99,7 +99,7 @@ def register():
         db.session.commit()
         flash('Congratulations, you are now a registered user!')
         return redirect(url_for('login'))
-    return render_template('register.html', title='Register', form=form)
+    return render_template('register.html', title='Register', form=form, nav='')
 
 
 @app.route('/stats')
@@ -129,8 +129,10 @@ def stats():
             'slpng_giants_se',
         }
         for account in sorted(accounts):
-            data[f'@{account}'] = collection.find({'user.screen_name': account}).count()
-        return render_template('stats.html', title='Stats', data=data, nav='/stats')
+            data[f'@{account}'] = (
+                f'{collection.find({"user.screen_name": account}).count():,}'
+            )
+        return render_template('stats.html', title='Stats', data=data, nav='')
     except Exception:
         logger.exception('TwiBrowser stats error: ')
         return redirect(url_for('index'))
