@@ -55,15 +55,11 @@ def format_tweet(tweet_data):
 
 
 def systemd_status(daemon):
-    status_pattern = re.compile(r'Active: (?P<status>active|inactive)')
     try:
-        raw_out = check_output(['systemctl', 'status', daemon]).decode()
+        raw_out = check_output(['systemctl', 'is-active', daemon]).decode()
     except Exception:
         return 'N/A'
-    match = status_pattern.search(raw_out)
-    if not match:
-        return 'N/A'
-    return match.groupdict()['status']
+    return raw_out
 
 
 def crawler_status():
