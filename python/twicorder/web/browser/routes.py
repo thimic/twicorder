@@ -160,7 +160,7 @@ def stats():
                 counter['Date({created_at:%Y, %m, %d})'.format(**tweet)] += 1
             except Exception:
                 continue
-        date_count = [f'[ new {k}, {v} ],' for k, v in counter.items()]
+        date_count = sorted([f'[ new {k}, {v} ],' for k, v in counter.items()])
         return render_template('stats.html', title='Stats', data=data, date_count='\n'.join(date_count))
     except Exception:
         logger.exception('TwiBrowser stats error: ')
