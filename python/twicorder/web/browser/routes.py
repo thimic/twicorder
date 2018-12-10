@@ -59,7 +59,7 @@ def systemd_status(daemon):
     raw_out = check_output(['systemctl', 'status', daemon]).decode()
     match = status_pattern.search(raw_out)
     if not match:
-        return
+        return 'N/A'
     return match.groupdict()['status']
 
 
