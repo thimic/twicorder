@@ -18,6 +18,8 @@ from twicorder.auth import get_auth_handler
 from twicorder.config import Config
 from twicorder.constants import TW_TIME_FORMAT
 
+logger = utils.FileLogger.get()
+
 
 class TwicorderListener(StreamListener):
 
@@ -231,14 +233,21 @@ class TwicorderListener(StreamListener):
                 self.update_mentions(data)
 
             # Add tweet to MongoDB
-            mongo_data = copy.deepcopy(data)
-            mongo_data = utils.timestamp_to_datetime(mongo_data)
-            mongo_data = utils.stream_to_search(mongo_data)
-            self.mongo_collection.replace_one(
-                {'id': mongo_data['id']},
-                mongo_data,
-                upsert=True
-            )
+            if self.mongo_collection:
+                try:
+                    mongo_data = copy.deepcopy(data)
+                    mongo_data = utils.timestamp_to_datetime(mongo_data)
+                    mongo_data = utils.stream_to_search(mongo_data)
+                    self.mongo_collection.replace_one(
+                        {'id': mongo_data['id']},
+                        mongo_data,
+                        upsert=True
+                    )
+                except Exception:
+                    logger.exception(
+                        'Twicorder Listener: Unable to connect to MongoDB: '
+                    )
+
         self._data.append(data)
         utils.write(json.dumps(data) + '\n', file_path)
         timestamp = '{:%d %b %Y %H:%M:%S}'.format(datetime.now())

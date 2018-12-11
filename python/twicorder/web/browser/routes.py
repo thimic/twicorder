@@ -155,12 +155,12 @@ def stats():
             )
 
         counter = Counter()
-        for tweet in collection.find({"user.screen_name": 'slpng_giants'}):
-            try:
-                d = tweet['created_at']
-                counter[f'Date({d.year}, {d.month - 1}, {d.day})'] += 1
-            except Exception:
-                continue
+        # for tweet in collection.find({"user.screen_name": 'slpng_giants'}):
+        #     try:
+        #         d = tweet['created_at']
+        #         counter[f'Date({d.year}, {d.month - 1}, {d.day})'] += 1
+        #     except Exception:
+        #         continue
         date_count = sorted([f'[ new {k}, {v} ],' for k, v in counter.items()])
         return render_template('stats.html', title='Stats', data=data, date_count='\n'.join(date_count))
     except Exception:

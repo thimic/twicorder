@@ -12,6 +12,8 @@ from pymongo import MongoClient, TEXT
 from twicorder.config import Config
 from twicorder import utils
 
+logger = utils.FileLogger.get()
+
 
 def create_collection(db_name='slpng_giants', collection_name='tweets'):
     """
@@ -26,8 +28,12 @@ def create_collection(db_name='slpng_giants', collection_name='tweets'):
         Collection: Created collection.
 
     """
-    client = MongoClient()
-    db = client[db_name]
+    try:
+        client = MongoClient()
+        db = client[db_name]
+    except Exception:
+        logger.exception('Unable to connect to MongoDB: ')
+        return
     if collection_name in db.list_collection_names():
         return db[collection_name]
     collection = db[collection_name]

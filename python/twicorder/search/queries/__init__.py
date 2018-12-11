@@ -144,15 +144,21 @@ class BaseQuery(object):
         self.log(f'Wrote {len(self.results)} tweets to "{file_path}"')
 
         # Write to Mongo
-        for result in self._results:
-            data = copy.deepcopy(result)
-            data = timestamp_to_datetime(data)
-            self.mongo_collection.replace_one(
-                {'id': data['id']},
-                data,
-                upsert=True
-            )
-        self.log(f'Wrote {len(self.results)} tweets to MongoDB')
+        if not self.mongo_collection:
+            return
+        try:
+            for result in self._results:
+                data = copy.deepcopy(result)
+                data = timestamp_to_datetime(data)
+                self.mongo_collection.replace_one(
+                    {'id': data['id']},
+                    data,
+                    upsert=True
+                )
+        except Exception:
+            self.log(f'Unable to connect to MongoDB: {traceback.format_exc()}')
+        else:
+            self.log(f'Wrote {len(self.results)} tweets to MongoDB')
 
     def pickle(self):
         """
