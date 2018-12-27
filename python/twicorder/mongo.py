@@ -98,6 +98,8 @@ def backfill(path=None, db_name='slpng_giants', collection_name='tweets'):
     paths = glob.glob(os.path.join(save_dir, '**', '*.t*'), recursive=True)
     t0 = datetime.now()
     for idx, path in enumerate(paths):
+        if os.path.basename(os.path.dirname(path)) == 'stream':
+            continue
         try:
             for lidx, line in enumerate(utils.readlines(path)):
                 try:
