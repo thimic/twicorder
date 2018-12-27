@@ -79,8 +79,8 @@ def backfill(path=None, db_name='slpng_giants', collection_name='tweets'):
                     if data.get('delete'):
                         continue
                     if os.path.basename(os.path.dirname(path)) == 'stream':
-                        data = utils.timestamp_to_datetime(data)
-                    data = utils.stream_to_search(data)
+                        data = utils.stream_to_search(data)
+                    data = utils.timestamp_to_datetime(data)
                     tweets.replace_one({'id': data['id']}, data, upsert=True)
             t_delta = datetime.now() - t0
             average = t_delta / (idx + 1)

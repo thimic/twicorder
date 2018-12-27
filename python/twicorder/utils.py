@@ -334,7 +334,9 @@ def timestamp_to_datetime(data):
         elif isinstance(value, dict):
             data[key] = timestamp_to_datetime(value)
         elif isinstance(value, list):
-            data[key] = [timestamp_to_datetime(v) for v in value if isinstance(v, dict)]
+            data[key] = [
+                timestamp_to_datetime(v) for v in value if isinstance(v, dict)
+            ]
     return data
 
 
