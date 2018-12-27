@@ -8,11 +8,43 @@ import os
 from datetime import datetime
 
 from pymongo import MongoClient, TEXT
+from pymongo.collection import Collection
+from pymongo.database import Database
+from pymongo.errors import ServerSelectionTimeoutError
 
 from twicorder.config import Config
 from twicorder import utils
 
 logger = utils.FileLogger.get()
+
+
+def is_connected(entity):
+    """
+    Checks if client is still connected to database.
+
+    Args:
+        entity (object): MongoClient, Database or Collection object
+
+    Returns:
+        bool: True if connected, else False
+
+    """
+    if isinstance(entity, MongoClient):
+        client = entity
+    elif isinstance(entity, Database):
+        client = entity.client
+    elif isinstance(entity, Collection):
+        client = entity.database.client
+    else:
+        error = (
+            'Please provide an instance of MongoClient, Database or Collection.'
+        )
+        raise TypeError(error)
+    try:
+        client.server_info()
+    except ServerSelectionTimeoutError:
+        return False
+    return True
 
 
 def create_collection(db_name='slpng_giants', collection_name='tweets'):

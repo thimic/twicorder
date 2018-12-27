@@ -37,7 +37,7 @@ class TwicorderListener(StreamListener):
         self._data = []
         self._users = {}
         self._file_name = None
-        self._mongo_collection = mongo.create_collection()
+        self._mongo_collection = None
 
     @property
     def config(self):
@@ -148,6 +148,8 @@ class TwicorderListener(StreamListener):
             pymongo.Collection: MongoDB collection
 
         """
+        if not self._mongo_collection or not mongo.is_connected(self._mongo_collection):
+            self._mongo_collection = mongo.create_collection()
         return self._mongo_collection
 
     @staticmethod

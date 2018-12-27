@@ -29,7 +29,7 @@ class BaseQuery(object):
     _results_path = None
     _fetch_more_path = None
 
-    _mongo_collection = mongo.create_collection()
+    _mongo_collection = None
 
     def __init__(self, output=None, **kwargs):
         self._done = False
@@ -113,6 +113,8 @@ class BaseQuery(object):
 
     @property
     def mongo_collection(self):
+        if not self._mongo_collection or not mongo.is_connected(self._mongo_collection):
+            self._mongo_collection = mongo.create_collection()
         return self._mongo_collection
 
     def run(self):
