@@ -76,6 +76,7 @@ class Exporter:
         return tweet_type
 
     def _get_tweet_text(self, tweet_obj):
+        # Todo: Account for extended tweets from the streaming API
         text_obj = tweet_obj
         if tweet_obj.get('retweeted_status'):
             text_obj = tweet_obj['retweeted_status']
@@ -94,12 +95,14 @@ class Exporter:
         author = self.register_user(tweet_obj['user'], tweet_obj['id'])
 
         # Register entities
+        # Todo: Account for extended tweets from the streaming API
         for hashtag in tweet_obj['entities'].get('hashtags', []):
             self.register_hashtag(hashtag, tweet_obj['id'])
         for symbol in tweet_obj['entities'].get('symbols', []):
             self.register_symbol(symbol, tweet_obj['id'])
         for url in tweet_obj['entities'].get('urls', []):
             self.register_url(url, tweet_obj['id'])
+        # Todo: Account for extended entities
         for media in tweet_obj['entities'].get('media', []):
             self.register_media(media, tweet_obj['id'])
         # Todo: Mentions!
@@ -114,6 +117,7 @@ class Exporter:
             in_reply_to_status_id=tweet_obj['in_reply_to_status_id'],
             in_reply_to_user_id=tweet_obj['in_reply_to_user_id'],
             in_reply_to_screen_name=tweet_obj['in_reply_to_screen_name'],
+            # Todo: Complete table
         )
         self.session.add(tweet)
         # self.session.merge(tweet)
