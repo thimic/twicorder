@@ -316,6 +316,20 @@ def flatten(l):
     return [item for sublist in l for item in sublist]
 
 
+def str_to_date(text):
+    """
+    Turns a time stamp represented as a string into a datetime object.
+
+    Args:
+        text (str): Time stamp
+
+    Returns:
+        datetime.datetime: Time stamp as datetime object
+
+    """
+    return datetime.strptime(text, TW_TIME_FORMAT)
+
+
 def timestamp_to_datetime(data):
     """
     Traverse dictionary and convert all instances of time stamp strings into

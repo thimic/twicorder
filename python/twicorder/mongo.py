@@ -81,7 +81,10 @@ def create_collection(db_name='slpng_giants', collection_name='tweets'):
         collection.create_index('user.favourites_count')
         collection.create_index('user.verified')
         collection.create_index('user.statuses_count')
-        collection.create_index([('full_text', TEXT)])
+        collection.create_index(
+            [('full_text', TEXT)],
+            default_language='english'
+        )
         return collection
     except Exception:
         logger.exception('Unable to connect to MongoDB: ')
