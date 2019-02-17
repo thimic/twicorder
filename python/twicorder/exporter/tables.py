@@ -37,7 +37,9 @@ class Tweet(Base):
     text = Column(String(1024), index=True)
 
     # Foreign Keys
-    user_id = Column(BigInteger, ForeignKey('users.unique_id'), index=True)
+    user_unique_id = Column(BigInteger, ForeignKey('users.unique_id'), index=True)
+    user_id = Column(BigInteger, index=True)
+    user_screen_name = Column(String(64), index=True)
 
     # Attributes
     in_reply_to_status_id = Column(BigInteger)
@@ -55,10 +57,10 @@ class Tweet(Base):
 
     mention_count = Column(SmallInteger, index=True)
     retweet_count = Column(Integer, index=True)
-    favourite_count = Column(Integer, index=True)
+    favorite_count = Column(Integer, index=True)
 
     lang = Column(String(8), index=True)
-    possibly_sensitive = Column(Boolean, index=True)
+    possibly_sensitive = Column(Boolean, index=True, default=False)
 
     display_start = Column(SmallInteger, index=True)
     display_end = Column(SmallInteger, index=True)
@@ -74,6 +76,8 @@ class Tweet(Base):
 
     withheld_copyright = Column(Boolean, index=True)
     withheld_in_countries_str = Column(String(256))
+
+    raw_file = Column(String(128))
 
     # Relationships
     # user = relationship('User', uselist=False, back_populates='tweets')
@@ -117,15 +121,21 @@ class Mention(Base):
 
     __tablename__ = 'mentions'
 
-    # Primary keys
+    # Primary key
+    mention_id = Column(Integer, primary_key=True)
+
     unique_user_id = Column(
-        BigInteger, ForeignKey('users.unique_id'), primary_key=True, index=True
+        BigInteger, ForeignKey('users.unique_id'), index=True
     )
     tweet_id = Column(
-        BigInteger, ForeignKey('tweets.tweet_id'), primary_key=True, index=True
+        BigInteger, ForeignKey('tweets.tweet_id'), index=True
     )
+
+    user_id = Column(BigInteger, index=True)
     display_start = Column(SmallInteger, index=True)
     display_end = Column(SmallInteger, index=True)
+    name = Column(String(64), index=True)
+    screen_name = Column(String(64), index=True)
 
     # Releationships
     # tweet = relationship('Tweet', back_populates='mentions')
@@ -168,8 +178,9 @@ class Media(Base):
     __tablename__ = 'media'
 
     # Primary key
-    media_id = Column(BigInteger, primary_key=True)
+    unique_id = Column(Integer, primary_key=True)
 
+    media_id = Column(BigInteger, index=True)
     media_url = Column(String(2048))
     url = Column(String(512), index=True)
     expanded_url = Column(String(2048))
