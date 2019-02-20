@@ -32,6 +32,8 @@ class Tweet(Base):
     # Primary Key
     tweet_id = Column(BigInteger, primary_key=True, index=True)
 
+    primary_capture = Column(Boolean, index=True)
+    endpoint = Column(String(2), index=True)
     created_at = Column(DateTime, index=True)
     tweet_type = Column(String(2), default='tw', index=True)
     text = Column(String(1024), index=True)
@@ -50,6 +52,7 @@ class Tweet(Base):
     hashtag_count = Column(Integer, default=0, index=True)
 
     url_count = Column(Integer, default=0, index=True)
+    media_count = Column(Integer, default=0, index=True)
 
     retweet_status_id = Column(BigInteger, ForeignKey('tweets.tweet_id'))
     is_quote_status = Column(Boolean, index=True)
@@ -95,6 +98,8 @@ class User(Base):
     user_id = Column(BigInteger, index=True)
     name = Column(String(64), index=True)
     screen_name = Column(String(64), index=True)
+    endpoint = Column(String(2), index=True)
+    capture_date = Column(DateTime)
     location = Column(String(256))
     description = Column(String(512))
     url = Column(String(256))
@@ -159,6 +164,7 @@ class Hashtag(Base):
 
 
 class Symbol(Base):
+
     __tablename__ = 'symbols'
 
     # Primary key

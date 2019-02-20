@@ -88,13 +88,23 @@ class Exporter:
         return tweet_type
 
     @staticmethod
+    def _get_endpoint(raw_file):
+        tokens = [t for t in raw_file.split(os.sep) if t]
+        if len(tokens) == 2 and tokens[0] == 'stream':
+            return 'st'
+        elif len(tokens) == 3:
+            if tokens[1] == 'timeline':
+                return 'tl'
+            elif tokens[1] == 'mentions':
+                return 'mt'
+            elif tokens[1] == 'replies':
+                return 'rp'
+
+    @staticmethod
     def _get_tweet_text(tweet_obj):
-        # Todo: Account for extended tweets from the streaming API
         text_obj = tweet_obj.copy()
         if tweet_obj.get('retweeted_status'):
             text_obj = tweet_obj['retweeted_status'].copy()
-        elif tweet_obj.get('quoted_status'):
-            text_obj = tweet_obj['quoted_status'].copy()
         if text_obj.get('extended_tweet'):
             text_obj = text_obj['extended_tweet']
         text = text_obj.get('full_text', text_obj.get('text'))
@@ -135,7 +145,7 @@ class Exporter:
             return
         tweet_obj['entities']['media'] = extended_entities['media']
 
-    def register_tweet(self, tweet_obj, raw_file, line):
+    def register_tweet(self, tweet_obj, raw_file, line, primary=True):
         tweet_id = tweet_obj['id']
 
         # Skip duplicates
@@ -146,7 +156,16 @@ class Exporter:
 
         hashtags = []
         urls = []
+        media_objects = []
         mentions = []
+
+        # Copy retweet entities from original tweet
+        if tweet_obj.get('retweeted_status'):
+            retweeted_status = tweet_obj['retweeted_status']
+            tweet_obj['entities'] = retweeted_status['entities']
+            if retweeted_status.get('extended_entities'):
+                extended_entities = retweeted_status['extended_entities']
+                tweet_obj['extended_entities'] = extended_entities
 
         # Extend tweet
         if tweet_obj.get('extended_tweet'):
@@ -158,6 +177,12 @@ class Exporter:
 
         # Extend entities
         self._extend_entities(tweet_obj)
+
+        # Created date
+        created_date = str_to_date(tweet_obj['created_at'])
+
+        # Get end point
+        endpoint = self._get_endpoint(raw_file)
 
         # Get tweet text
         text, text_range = self._get_tweet_text(tweet_obj)
@@ -184,17 +209,23 @@ class Exporter:
         raw_file_str = f'{raw_file}:{line}'
 
         # Register author
-        author = self.register_user(tweet_obj['user'], tweet_id)
+        capture_date = created_date if primary else None
+        author = self.register_user(
+            user_obj=tweet_obj['user'],
+            tweet_id=tweet_id,
+            endpoint=endpoint,
+            capture_date=capture_date
+        )
 
         # Register retweet
         retweet = tweet_obj.get('retweeted_status')
         if retweet:
-            self.register_tweet(retweet, raw_file, line)
+            self.register_tweet(retweet, raw_file, line, primary=False)
 
         # Register quoted tweet
         quoted_status = tweet_obj.get('quoted_status')
         if quoted_status:
-            self.register_tweet(quoted_status, raw_file, line)
+            self.register_tweet(quoted_status, raw_file, line, primary=False)
 
         # Register entities
         # Todo: Account for extended tweets from the streaming API
@@ -209,13 +240,22 @@ class Exporter:
         # Todo: Account for extended entities
         for media in tweet_obj['entities'].get('media', []):
             self.register_media(media, tweet_id)
+            media_objects.append(media)
         for mention in tweet_obj['entities'].get('user_mentions', []):
-            self.register_mention(mention, tweet_id, author)
+            self.register_mention(
+                mention_obj=mention,
+                tweet_id=tweet_id,
+                author=author,
+                endpoint=endpoint,
+                capture_date=capture_date
+            )
             mentions.append(mention)
 
         # Register tweet
         tweet = Tweet(
             tweet_id=tweet_id,
+            primary_capture=primary,
+            endpoint=endpoint,
             created_at=str_to_date(tweet_obj['created_at']),
             tweet_type=self._get_tweet_type(tweet_obj),
             text=text,
@@ -228,6 +268,7 @@ class Exporter:
             hashtags_str=','.join(sorted(hashtags)),
             hashtag_count=len(hashtags),
             url_count=len(urls),
+            media_count=len(media_objects),
             retweet_status_id=retweet['id'] if retweet else None,
             is_quote_status=tweet_obj['is_quote_status'],
             quoted_status_id=quoted_status['id'] if quoted_status else None,
@@ -256,13 +297,15 @@ class Exporter:
         self.stats['exported_tweets'] += 1
         return tweet
 
-    def register_user(self, user_obj, tweet_id):
+    def register_user(self, user_obj, tweet_id, endpoint, capture_date=None):
         if 'created_at' not in user_obj:
             return
         user = User(
             user_id=user_obj['id'],
             name=user_obj['name'],
             screen_name=user_obj['screen_name'],
+            endpoint=endpoint,
+            capture_date=capture_date,
             location=user_obj['location'],
             description=user_obj['description'],
             url=user_obj['url'],
@@ -309,11 +352,17 @@ class Exporter:
         self.session.commit()
         return symbol
 
-    def register_mention(self, mention_obj, tweet_id, author=None):
+    def register_mention(self, mention_obj, tweet_id, endpoint, author=None,
+                         capture_date=None):
         if author.user_id == mention_obj['id']:
             user = author
         else:
-            user = self.register_user(mention_obj, tweet_id)
+            user = self.register_user(
+                user_obj=mention_obj,
+                tweet_id=tweet_id,
+                endpoint=endpoint,
+                capture_date=capture_date
+            )
         start, end = mention_obj['indices']
         mention = Mention(
             display_start=start,
