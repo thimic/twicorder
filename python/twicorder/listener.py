@@ -324,7 +324,7 @@ class TwicorderStream(Stream):
 
     @property
     def track(self):
-        track_list = [t for t in self.config.get('track') if t] or None
+        track_list = [t for t in self.config.get('track') or [] if t] or None
         if track_list and self.follow_also_tracks:
             track_list += self.id_to_screenname.values()
         print('Tracking: ', track_list)
