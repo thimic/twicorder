@@ -421,7 +421,13 @@ class Exporter:
         t0 = datetime.now()
         for fidx, file_path in enumerate(file_paths):
             raw_file = file_path.replace(self.root_path, '')
-            lines = readlines(file_path)
+            try:
+                lines = readlines(file_path)
+            except Exception:
+                print(' Failed to read '.center(80, '='))
+                print(raw_file)
+                print('=' * 80)
+                raise
             for idx, line in enumerate(lines):
                 if idx + 1 < ingested_files.get(raw_file, 0):
                     print(f'Already ingested: {raw_file}:{idx + 1}')
@@ -454,4 +460,5 @@ class Exporter:
 
 
 if __name__ == '__main__':
-    exporter = Exporter('sqlite:////Users/thimic/Desktop/tweets.db', True)
+    # exporter = Exporter('sqlite:////Users/thimic/Desktop/tweets.db', True)
+    exporter = Exporter('monetdb+lite:////Users/thimic/Desktop/tweets.monet', True)
