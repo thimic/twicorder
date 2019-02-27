@@ -150,6 +150,8 @@ class TwicorderListener(StreamListener):
         """
         if not self._mongo_collection or not mongo.is_connected(self._mongo_collection):
             self._mongo_collection = mongo.create_collection()
+            if not mongo.is_connected(self._mongo_collection):
+                return
         return self._mongo_collection
 
     @staticmethod
