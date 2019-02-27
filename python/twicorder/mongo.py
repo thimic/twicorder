@@ -62,6 +62,8 @@ def create_collection(db_name='slpng_giants', collection_name='tweets'):
     """
     try:
         client = MongoClient()
+        if not is_connected(client):
+            return
         db = client[db_name]
         if collection_name in db.list_collection_names():
             return db[collection_name]
