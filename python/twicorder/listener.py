@@ -294,7 +294,7 @@ class TwicorderStream(Stream):
         self._config = Config()
         self._id_to_screenname_time = None
         self._id_to_screenname = {}
-        stream_mode = self._config.get('stream_mode') or 'filter'
+        stream_mode = self.config.get('stream_mode') or 'filter'
         if stream_mode == 'filter':
             self.filter(
                 follow=self.follow,
