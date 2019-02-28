@@ -235,7 +235,7 @@ class TwicorderListener(StreamListener):
                 self.update_mentions(data)
 
             # Add tweet to MongoDB
-            if self.mongo_collection:
+            if self.config.get('use_mongo') or True and self.mongo_collection:
                 try:
                     mongo_data = copy.deepcopy(data)
                     mongo_data = utils.timestamp_to_datetime(mongo_data)
@@ -294,15 +294,24 @@ class TwicorderStream(Stream):
         self._config = Config()
         self._id_to_screenname_time = None
         self._id_to_screenname = {}
-        self.filter(
-            follow=self.follow,
-            track=self.track,
-            locations=self.locations,
-            stall_warnings=self.stall_warnings,
-            languages=self.languages,
-            encoding=self.encoding,
-            filter_level=self.filter_level
-        )
+        stream_mode = self._config.get('stream_mode') or 'filter'
+        if stream_mode == 'filter':
+            self.filter(
+                follow=self.follow,
+                track=self.track,
+                locations=self.locations,
+                stall_warnings=self.stall_warnings,
+                languages=self.languages,
+                encoding=self.encoding,
+                filter_level=self.filter_level
+            )
+        elif stream_mode == 'sample':
+            self.sample(
+                languages=self.languages,
+                stall_warnings=self.stall_warnings
+            )
+        else:
+            utils.message('Error', 'stream_mode must be "filter" or "sample"')
 
     @property
     def config(self):
