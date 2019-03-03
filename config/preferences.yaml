@@ -1,15 +1,29 @@
 
 # Save location, file name and extension for collected data
 # save_dir: "~/Dropbox/Projects/SMC/SleepingGiants"
-save_dir: "~/Desktop/sleeping_giants"
-save_prefix: "slpng_giants_"
-save_postfix: ".txt"
+#save_dir: "~/Dropbox/Apps/Twicorder/sleeping_giants"
+save_dir: "~/Desktop/control"
+save_prefix: "control_"
+save_postfix: ".twzip"
 
 # Amount of tweets to store per file
 tweets_per_file: 1000
 
 # How often this config will be reloaded by the listener (minutes)
 config_reload_interval: 15
+
+# Stream mode ("filter" or "sample")
+stream_mode: sample
+
+# Additionally store tweets in MongoDB
+use_mongo: False
+
+language:
+  - 'en'
+
+stall_warnings: True
+
+use_mongo: False
 
 # Keywords to track in tweets
 track:

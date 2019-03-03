@@ -208,7 +208,7 @@ class TwicorderListener(StreamListener):
                         user_json = self.api.get_user(mention['id_str'])._json
                         user_json['recorded_at'] = created_at
                         self.users[user_json['id_str']] = user_json
-                    mention.update(self.users[user_id])
+                        mention.update(self.users[user_id])
             elif isinstance(data[key], dict):
                 self.update_mentions(data[key], created_at)
 
