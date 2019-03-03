@@ -341,7 +341,7 @@ class TwicorderStream(Stream):
                         raise TweepError('Expecting length, unexpected value found')
 
                 next_status_obj = buf.read_len(length)
-            except IncompleteRead as error:
+            except Exception as error:
                 print(error)
                 continue
             if self.running and next_status_obj:
