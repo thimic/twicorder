@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import copy
 import json
 import os
+import re
 import time
-import copy
 
 from datetime import datetime, timedelta, timezone
+from http.client import IncompleteRead
 
 from tweepy import Stream
 from tweepy.api import API
-from tweepy.streaming import StreamListener
+from tweepy.error import TweepError
+from tweepy.streaming import StreamListener, ReadBuffer
 
 from twicorder import mongo
 from twicorder import utils
@@ -312,6 +315,40 @@ class TwicorderStream(Stream):
             )
         else:
             utils.message('Error', 'stream_mode must be "filter" or "sample"')
+
+    def _read_loop(self, resp):
+        charset = resp.headers.get('content-type', default='')
+        enc_search = re.search('charset=(?P<enc>\S*)', charset)
+        if enc_search is not None:
+            encoding = enc_search.group('enc')
+        else:
+            encoding = 'utf-8'
+
+        buf = ReadBuffer(resp.raw, self.chunk_size, encoding=encoding)
+
+        while self.running and not resp.raw.closed:
+            length = 0
+            while not resp.raw.closed:
+                line = buf.read_line()
+                stripped_line = line.strip() if line else line # line is sometimes None so we need to check here
+                if not stripped_line:
+                    self.listener.keep_alive()  # keep-alive new lines are expected
+                elif stripped_line.isdigit():
+                    length = int(stripped_line)
+                    break
+                else:
+                    raise TweepError('Expecting length, unexpected value found')
+
+            try:
+                next_status_obj = buf.read_len(length)
+            except IncompleteRead as error:
+                print(error)
+                continue
+            if self.running and next_status_obj:
+                self._data(next_status_obj)
+
+        if resp.raw.closed:
+            self.on_closed(resp)
 
     @property
     def config(self):
