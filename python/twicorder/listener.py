@@ -235,7 +235,7 @@ class TwicorderListener(StreamListener):
                 self.update_mentions(data)
 
             # Add tweet to MongoDB
-            if self.config.get('use_mongo') or True and self.mongo_collection:
+            if self.config.get('use_mongo', True) and self.mongo_collection:
                 try:
                     mongo_data = copy.deepcopy(data)
                     mongo_data = utils.timestamp_to_datetime(mongo_data)
