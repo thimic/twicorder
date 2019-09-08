@@ -43,6 +43,7 @@ class Exporter:
             'skipped_tweets': 0,
             'exported_tweets': 0
         }
+        self._tweet_id_buffer = set()
 
         if autostart:
             self.start()
@@ -54,6 +55,18 @@ class Exporter:
     @property
     def root_path(self):
         return os.path.expanduser(self.config['save_dir'])
+
+    @property
+    def tweet_id_buffer(self):
+        """
+        Buffer of tweet IDs for tweets that have been read, but which have not
+        yet been committed to SQL.
+
+        Returns:
+            set[int]: Tweet IDs
+
+        """
+        return self._tweet_id_buffer
 
     def _collect_file_paths(self):
         """
@@ -121,7 +134,10 @@ class Exporter:
     def _get_coordinates_from_place(place_obj):
         if not place_obj:
             return [None, None]
-        coordinates = place_obj['bounding_box']['coordinates'][0]
+        bounding_box = place_obj['bounding_box']
+        if not bounding_box:
+            return [None, None]
+        coordinates = bounding_box['coordinates'][0]
         latitude = mean([c[0] for c in coordinates])
         longitude = mean([c[1] for c in coordinates])
         return [latitude, longitude]
@@ -150,7 +166,7 @@ class Exporter:
 
         # Skip duplicates
         (ret,), = self.session.query(exists().where(Tweet.tweet_id == tweet_id))
-        if ret:
+        if ret or tweet_id in self.tweet_id_buffer:
             self.stats['skipped_tweets'] += 1
             return
 
@@ -292,8 +308,7 @@ class Exporter:
             raw_file=raw_file_str,
         )
         self.session.add(tweet)
-        # self.session.merge(tweet)
-        self.session.commit()
+        self.tweet_id_buffer.add(tweet_id)
         self.stats['exported_tweets'] += 1
         return tweet
 
@@ -324,7 +339,6 @@ class Exporter:
             tweet_id=tweet_id
         )
         self.session.add(user)
-        self.session.commit()
         return user
 
     def register_hashtag(self, hashtag_obj, tweet_id):
@@ -337,7 +351,6 @@ class Exporter:
             tweet_id=tweet_id
         )
         self.session.add(hashtag)
-        self.session.commit()
         return hashtag
 
     def register_symbol(self, symbol_obj, tweet_id):
@@ -349,7 +362,6 @@ class Exporter:
             tweet_id=tweet_id
         )
         self.session.add(symbol)
-        self.session.commit()
         return symbol
 
     def register_mention(self, mention_obj, tweet_id, endpoint, author=None,
@@ -374,7 +386,6 @@ class Exporter:
             screen_name=mention_obj['screen_name']
         )
         self.session.add(mention)
-        self.session.commit()
         return mention
 
     def register_media(self, media_obj, tweet_id):
@@ -391,7 +402,6 @@ class Exporter:
             tweet_id=tweet_id
         )
         self.session.add(media)
-        self.session.commit()
         return media
 
     def register_url(self, url_obj, tweet_id):
@@ -404,7 +414,6 @@ class Exporter:
             tweet_id=tweet_id
         )
         self.session.add(url)
-        self.session.commit()
         return url
 
     def _get_ingested_files(self):
@@ -420,6 +429,7 @@ class Exporter:
         file_paths = self._collect_file_paths()
         t0 = datetime.now()
         for fidx, file_path in enumerate(file_paths):
+            self.tweet_id_buffer.clear()
             raw_file = file_path.replace(self.root_path, '')
             try:
                 lines = readlines(file_path)
@@ -441,6 +451,7 @@ class Exporter:
                     # Don't bother with delete messages
                     continue
                 tweet = self.register_tweet(data, raw_file, idx + 1)
+            self.session.commit()
 
             # Print time remaining
             t_delta = datetime.now() - t0
@@ -460,5 +471,4 @@ class Exporter:
 
 
 if __name__ == '__main__':
-    # exporter = Exporter('sqlite:////Users/thimic/Desktop/tweets.db', True)
-    exporter = Exporter('monetdb+lite:////Users/thimic/Desktop/tweets.monet', True)
+    exporter = Exporter('sqlite:////Users/thimic/Desktop/tweets.db', True)
