@@ -1,8 +1,8 @@
 
 # Save location, file name and extension for collected data
-save_dir: "~/Desktop/control"
-save_prefix: "control_"
-save_postfix: ".twzip"
+save_dir: "~/twicorder"
+save_prefix: "tweets_"
+save_postfix: ".zip"
 
 # Amount of tweets to store per file
 tweets_per_file: 1000

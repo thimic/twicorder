@@ -29,7 +29,7 @@ class Config(object):
         """
         listener_path = os.path.join(CONFIG_DIR, 'preferences.yaml')
         with open(listener_path, 'r') as stream:
-            config = yaml.load(stream)
+            config = yaml.safe_load(stream)
         return config
 
     @classmethod

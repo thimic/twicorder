@@ -12,6 +12,8 @@ from statistics import mean
 from sqlalchemy import create_engine, exists, MetaData, Table
 from sqlalchemy.orm import sessionmaker
 
+from tqdm import tqdm
+
 from twicorder.constants import (
     COMPRESSED_EXTENSIONS,
     REGULAR_EXTENSIONS,
@@ -428,7 +430,13 @@ class Exporter:
         ingested_files = self._get_ingested_files()
         file_paths = self._collect_file_paths()
         t0 = datetime.now()
-        for fidx, file_path in enumerate(file_paths):
+        print('')
+        progress_iter = tqdm(
+            iterable=file_paths,
+            desc='Exporting',
+            unit='files', ncols=120
+        )
+        for file_path in progress_iter:
             self.tweet_id_buffer.clear()
             raw_file = file_path.replace(self.root_path, '')
             try:
@@ -453,14 +461,6 @@ class Exporter:
                 tweet = self.register_tweet(data, raw_file, idx + 1)
             self.session.commit()
 
-            # Print time remaining
-            t_delta = datetime.now() - t0
-            average = t_delta / (fidx + 1)
-            remaining = (
-                str((len(file_paths) - (fidx + 1)) * average).split('.')[0]
-            )
-            print(f'{fidx + 1}/{len(file_paths)} {remaining} {raw_file}')
-
         print(
             '\n'
             'Total exported tweets: {exported_tweets}\n'
@@ -471,4 +471,4 @@ class Exporter:
 
 
 if __name__ == '__main__':
-    exporter = Exporter('sqlite:////Users/thimic/Desktop/tweets.db', True)
+    exporter = Exporter('sqlite:////tmp/tweets.db', True)
