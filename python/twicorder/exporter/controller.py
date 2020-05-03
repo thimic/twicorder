@@ -5,6 +5,8 @@ import glob
 import json
 import os
 
+import click
+
 from collections import Counter
 from datetime import datetime
 from statistics import mean
@@ -18,7 +20,6 @@ from twicorder.constants import (
     COMPRESSED_EXTENSIONS,
     REGULAR_EXTENSIONS,
 )
-from twicorder.config import Config
 from twicorder.exporter.tables import create_tables
 from twicorder.exporter.tables import (
     Base,
@@ -35,7 +36,7 @@ from twicorder.utils import readlines, str_to_date
 
 class Exporter:
 
-    def __init__(self, export_path, autostart=False):
+    def __init__(self, raw_data_path, export_path, autostart=False):
         engine = create_engine(export_path)
         create_tables(engine)
         Base.metadata.bind = engine
@@ -46,17 +47,14 @@ class Exporter:
             'exported_tweets': 0
         }
         self._tweet_id_buffer = set()
+        self._raw_data_path = raw_data_path
 
         if autostart:
             self.start()
 
     @property
-    def config(self):
-        return Config.get()
-
-    @property
     def root_path(self):
-        return os.path.expanduser(self.config['save_dir'])
+        return self._raw_data_path
 
     @property
     def tweet_id_buffer(self):
@@ -470,5 +468,42 @@ class Exporter:
         )
 
 
+def expand_path(path: str) -> str:
+    """
+    Expand user and environment variables for the given path.
+
+    Args:
+        path: Path to expand
+
+    Returns:
+        Expanded path
+
+    """
+    return os.path.expanduser(os.path.expandvars(path))
+
+
+@click.command()
+@click.argument('raw_data_dir', required=True, envvar='TC_EXPORT_IN')
+@click.argument('output_dir', required=True, envvar='TC_EXPORT_OUT')
+def main(raw_data_dir: str, output_dir: str):
+    """
+    Twicorder raw data to SQLite exporter
+    """
+    raw_data_dir = expand_path(raw_data_dir)
+    output_dir = expand_path(output_dir)
+    if not os.path.isdir(raw_data_dir):
+        click.echo(f'Raw data path was not found: {raw_data_dir!r}')
+        return
+    if not os.path.isdir(output_dir):
+        try:
+            os.makedirs(output_dir)
+        except Exception:
+            click.echo(f'Unable to find or create output dir: {output_dir!r}')
+            return
+    output_path = os.path.join(output_dir, 'tweets.db')
+    sqlite_path = f'sqlite:///{output_path}'
+    Exporter(raw_data_dir, sqlite_path, True)
+
+
 if __name__ == '__main__':
-    exporter = Exporter('sqlite:////tmp/tweets.db', True)
+    main()
