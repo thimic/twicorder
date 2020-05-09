@@ -36,8 +36,14 @@ from twicorder.utils import readlines, str_to_date
 
 class Exporter:
 
-    def __init__(self, raw_data_path, export_path, autostart=False):
-        engine = create_engine(export_path)
+    def __init__(self, raw_data_path, output_path, autostart=False,
+                 new_only=False):
+        self._new_only = new_only
+        self._db_date = 0.0
+        if os.path.isfile(output_path):
+            self._db_date = os.path.getmtime(output_path)
+        sqlite_path = f'sqlite:///{output_path}'
+        engine = create_engine(sqlite_path)
         create_tables(engine)
         Base.metadata.bind = engine
         DBSession = sessionmaker(bind=engine)
@@ -82,6 +88,13 @@ class Exporter:
         paths = [
             p for p in paths if os.path.splitext(p)[-1].strip('.') in extensions
         ]
+        if self._new_only:
+            hour = 3600
+            grace_period = 6 * hour
+            paths = [
+                p for p in paths
+                if os.path.getmtime(p) > self._db_date - grace_period
+            ]
         return sorted(paths)
 
     @staticmethod
@@ -485,7 +498,17 @@ def expand_path(path: str) -> str:
 @click.command()
 @click.argument('raw_data_dir', required=True, envvar='TC_EXPORT_IN')
 @click.argument('output_dir', required=True, envvar='TC_EXPORT_OUT')
-def main(raw_data_dir: str, output_dir: str):
+@click.option(
+    '--new-only',
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help=(
+        'If a database file exists, only export raw files created after the '
+        'database'
+    )
+)
+def main(raw_data_dir: str, output_dir: str, new_only: bool):
     """
     Twicorder raw data to SQLite exporter
     """
@@ -501,9 +524,8 @@ def main(raw_data_dir: str, output_dir: str):
             click.echo(f'Unable to find or create output dir: {output_dir!r}')
             return
     output_path = os.path.join(output_dir, 'tweets.db')
-    sqlite_path = f'sqlite:///{output_path}'
-    Exporter(raw_data_dir, sqlite_path, True)
+    Exporter(raw_data_dir, output_path, autostart=True, new_only=new_only)
 
 
 if __name__ == '__main__':
-    main()
+    main(auto_envvar_prefix='TC_EXPORT')
