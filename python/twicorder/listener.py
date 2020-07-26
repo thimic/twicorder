@@ -11,7 +11,7 @@ from datetime import datetime, timedelta, timezone
 
 from tweepy import Stream
 from tweepy.api import API
-from tweepy.error import TweepError
+from tweepy.error import TweepError, RateLimitError
 from tweepy.streaming import StreamListener, ReadBuffer
 
 from twicorder import mongo
@@ -202,7 +202,13 @@ class TwicorderListener(StreamListener):
                 for mention in data[key]:
                     user_id = mention['id_str']
                     if user_id not in self.users:
-                        user_json = self.api.get_user(mention['id_str'])._json
+                        try:
+                            user_json = self.api.get_user(mention['id_str'])._json
+                        except RateLimitError:
+                            time.sleep(5)
+                            continue
+                        except Exception:
+                            continue
                         user_json['recorded_at'] = created_at
                         self.users[user_json['id_str']] = user_json
                         mention.update(self.users[user_id])
