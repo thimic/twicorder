@@ -12,10 +12,9 @@ from pymongo.collection import Collection
 from pymongo.database import Database
 from pymongo.errors import ServerSelectionTimeoutError
 
-from twicorder.config import Config
 from twicorder import utils
-
-logger = utils.FileLogger.get()
+from twicorder.config import Config
+from twicorder.utils import TwiLogger
 
 
 def is_connected(entity):
@@ -89,16 +88,15 @@ def create_collection(db_name='slpng_giants', collection_name='tweets'):
         )
         return collection
     except Exception:
-        logger.exception('Unable to connect to MongoDB: ')
+        TwiLogger.exception('Unable to connect to MongoDB: ')
         return
 
 
 def backfill(path=None, db_name='slpng_giants', collection_name='tweets'):
-    logger = utils.FileLogger.get()
     tweets = create_collection(db_name, collection_name)
 
     config = Config.get()
-    save_dir = os.path.expanduser(path or config['save_dir'])
+    save_dir = os.path.expanduser(path or config['output_dir'])
 
     paths = glob.glob(os.path.join(save_dir, '**', '*.t*'), recursive=True)
     t0 = datetime.now()
@@ -110,7 +108,7 @@ def backfill(path=None, db_name='slpng_giants', collection_name='tweets'):
                 try:
                     data = json.loads(line)
                 except Exception:
-                    logger.exception(
+                    TwiLogger.exception(
                         f'Backfill: Unable to read line {path}:{lidx + 1}'
                     )
                     continue
@@ -125,13 +123,13 @@ def backfill(path=None, db_name='slpng_giants', collection_name='tweets'):
             average = t_delta / (idx + 1)
             remaining = str((len(paths) - (idx + 1)) * average).split('.')[0]
 
-            logger.info(
+            TwiLogger.info(
                 f'{idx + 1}/{len(paths)} '
                 f'{remaining} '
                 f'{os.sep.join(path.split(os.sep)[-3:])}'
             )
         except Exception:
-            logger.exception(f'Backfill: Unable to read file: {path}')
+            TwiLogger.exception(f'Backfill: Unable to read file: {path}')
 
 
 if __name__ == '__main__':

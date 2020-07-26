@@ -23,14 +23,19 @@ def limit_handler(cursor):
 
 
 def main():
-    auth = get_auth_handler()
+    auth = get_auth_handler(
+        consumer_key='',
+        consumer_secret='',
+        access_token='',
+        access_secret=''
+    )
     api = tweepy.API(auth)
 
     config = Config.get()
 
     save_path = ''
     save_path_pattern = (
-        '{save_dir}/crawler/slpng_giants_timeline/{timestamp}{save_postfix}'
+        '{output_dir}/crawler/slpng_giants_timeline/{timestamp}{save_postfix}'
     )
 
     account_id = '799047255378391040'
@@ -44,8 +49,7 @@ def main():
             save_path = save_path_pattern.format(timestamp=timestamp, **config)
             save_path = os.path.expanduser(save_path)
             save_dir = os.path.dirname(save_path)
-            if not os.path.isdir(save_dir):
-                os.makedirs(save_dir, exist_ok=True)
+            os.makedirs(save_dir, exist_ok=True)
         total_tweets += 1
         tweets.append(status._json)
         write(json.dumps(status._json) + '\n', save_path)

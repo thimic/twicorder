@@ -133,7 +133,7 @@ class BaseQuery(object):
         if not self._results or not self._output:
             return
         config = Config.get()
-        save_root = config.get('save_dir')
+        save_root = config.get('output_dir')
         save_dir = os.path.join(save_root, self._output or self.uid)
         postfix = config.get('save_postfix')
         marker = self._results[0]

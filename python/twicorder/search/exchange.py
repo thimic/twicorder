@@ -7,9 +7,7 @@ from datetime import datetime
 from queue import Queue
 from threading import Thread
 
-from twicorder.utils import Singleton, FileLogger
-
-logger = FileLogger.get()
+from twicorder.utils import Singleton, TwiLogger
 
 
 class RateLimitCentral(object, metaclass=Singleton):
@@ -128,16 +126,16 @@ class QueryWorker(Thread):
         while True:
             self._query = self.queue.get()
             if self.query is None:
-                logger.info(f'Terminating thread "{self.name}"')
+                TwiLogger.info(f'Terminating thread "{self.name}"')
                 break
             while not self.query.done:
                 try:
                     self.query.run()
                 except Exception:
                     import traceback
-                    logger.exception(traceback.format_exc())
+                    TwiLogger.exception(traceback.format_exc())
                     break
-                logger.info(self.query.fetch_log())
+                TwiLogger.info(self.query.fetch_log())
                 time.sleep(.2)
             time.sleep(.5)
             self.queue.task_done()
@@ -190,14 +188,14 @@ class QueryExchange(object):
         """
         queue = self.get_queue(query.endpoint)
         if query in queue.queue:
-            logger.info(f'Query with ID {query.uid} is already in the queue.')
+            TwiLogger.info(f'Query with ID {query.uid} is already in the queue.')
             return
         thread = self.threads.get(query.endpoint)
         if thread and thread.query == query:
-            logger.info(f'Query with ID {query.uid} is already running.')
+            TwiLogger.info(f'Query with ID {query.uid} is already running.')
             return
         queue.put(query)
-        logger.info(query)
+        TwiLogger.info(query)
 
     def wait(self):
         """

@@ -1,6 +1,5 @@
 
 # Save location, file name and extension for collected data
-save_dir: "~/twicorder"
 save_prefix: "tweets_"
 save_postfix: ".zip"
 

@@ -1,47 +1,42 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import os
-
 from tweepy import OAuthHandler
-from tweepy.auth import AppAuthHandler
+from tweepy.auth import AppAuthHandler, OAuth2Bearer
 from twicorder.utils import Singleton
 
 
-def get_auth_handler():
+def get_auth_handler(consumer_key: str, consumer_secret: str,
+                     access_token: str, access_secret: str) -> OAuthHandler:
     """
     Loads login credentials from environment variables and instantiates an
     authentication handler.
 
     Returns:
-        tweepy.OAuthHandler: Authentication handler
+        Authentication handler
 
     """
-    app_auth = {
-        'consumer_key': os.getenv('CONSUMER_KEY'),
-        'consumer_secret': os.getenv('CONSUMER_SECRET')
-    }
-    user_auth = {
-        'key': os.getenv('ACCESS_TOKEN'),
-        'secret': os.getenv('ACCESS_SECRET')
-    }
-    auth_handler = OAuthHandler(**app_auth)
-    auth_handler.set_access_token(**user_auth)
+    auth_handler = OAuthHandler(consumer_key, consumer_secret)
+    auth_handler.set_access_token(access_token, access_secret)
     return auth_handler
 
 
-def get_token_auth():
+def get_token_auth(consumer_key: str, consumer_secret: str) -> OAuth2Bearer:
     """
     Loads login credentials from environment variables and instantiates a
     bearer token.
+
+    Args:
+        consumer_key: Consumer Key
+        consumer_secret: Consumer Secret
 
     Returns:
         OAuth2Bearer: Bearer token
 
     """
     auth = AppAuthHandler(
-        consumer_key=os.getenv('CONSUMER_KEY'),
-        consumer_secret=os.getenv('CONSUMER_SECRET')
+        consumer_key=consumer_key,
+        consumer_secret=consumer_secret
     )
     bearer = auth.apply_auth()
     return bearer
@@ -52,9 +47,10 @@ class Auth(object, metaclass=Singleton):
     Singleton for accessing the Auth handler
     """
 
-    _handler = get_auth_handler()
+    _handler = None
 
     def __new__(cls, *args, **kwargs):
+        cls._handler = get_auth_handler()
         return cls._handler
 
 
@@ -63,12 +59,8 @@ class TokenAuth(object, metaclass=Singleton):
     Singleton for accessing the Bearer Token
     """
 
-    _handler = get_token_auth()
+    _handler = None
 
     def __new__(cls, *args, **kwargs):
+        cls._handler = get_token_auth()
         return cls._handler
-
-
-if __name__ == '__main__':
-    handler = get_auth_handler()
-    print(handler.oauth)
