@@ -11,6 +11,6 @@ COPY python ./python
 ENV PYTHONPATH "/usr/src/twicorder/python"
 
 ENV TC_STREAM_PROJECT_DIR "/data"
-#ENV TC_STREAM_CONFIG_DIR "/config"
+ENV TC_STREAM_CONFIG_DIR "/config"
 
 CMD [ "python", "./bin/daemon" ]
