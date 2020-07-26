@@ -32,7 +32,11 @@ class TwicorderListener(StreamListener):
             api (tweepy.api.API): Tweepy API instance
 
         """
-        self.api = api or API(auth)
+        self.api = api or API(
+            auth_handler=auth,
+            wait_on_rate_limit=True,
+            wait_on_rate_limit_notify=True
+        )
         self._data = []
         self._users = {}
         self._file_name = None
