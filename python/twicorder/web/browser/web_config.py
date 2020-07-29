@@ -4,7 +4,7 @@
 import os
 
 basedir = os.path.abspath(os.path.dirname(__file__))
-db_dir = os.getenv('TC_WEB_DB') or basedir
+db_dir = os.getenv('TC_WEB_CONFIG') or basedir
 db_name = 'twicorder-web.db'
 
 
