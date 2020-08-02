@@ -36,7 +36,9 @@
             </div>
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav">
+                    {% if stats %}
                     <li><a href="{{ url_for('stats') }}">Stats</a></li>
+                    {% endif %}
                     {% if nav %}
                     {% for step in nav.split('/') %}
                     <li><a href="{{ url_for('index', req_path=nav.split('/')[:loop.index]|join('/')) }}">{{ step or 'root' }} {{ '({})'.format(items|length) if loop.last }}</a></li>

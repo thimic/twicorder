@@ -60,11 +60,22 @@ def systemd_status(daemon):
     return raw_out
 
 
+def container_status(container: str) -> str:
+    try:
+        raw_out = check_output(['docker', 'container', 'inspect', container])
+        data = json.loads(raw_out.decode())
+        state = data[0]['State']
+        status = state['Status']
+    except Exception:
+        return 'N/A'
+    return status
+
+
 def crawler_status():
     status = {
-        'Backup': systemd_status('stashbox'),
-        'Streaming': systemd_status('twicorder-listener'),
-        'Search': systemd_status('twicorder')
+        'Backup': container_status('stashbox'),
+        'Streaming': container_status('twicorder-listener'),
+        'Search': container_status('twicorder-search')
     }
     return status
 
@@ -103,8 +114,10 @@ def logout():
     return redirect(url_for('index'))
 
 
-# @app.route('/register', methods=['GET', 'POST'])
+@app.route('/register', methods=['GET', 'POST'])
 def register():
+    if not os.getenv('TC_WEB_REGISTRATION'):
+        return redirect(url_for('login'))
     if current_user.is_authenticated:
         return redirect(url_for('index'))
     form = RegistrationForm()
@@ -118,8 +131,8 @@ def register():
     return render_template('register.html', title='Register', form=form)
 
 
-@app.route('/stats')
-@login_required
+# @app.route('/stats')
+# @login_required
 def stats():
 
     from collections import Counter
@@ -170,7 +183,7 @@ def stats():
 @app.route('/raw/<path:req_path>')
 @login_required
 def raw(req_path):
-    base_dir = Config.get()['output_dir']
+    base_dir = os.getenv('TC_WEB_DATA') or os.getenv('HOME')
 
     # Joining the base and the requested path
     rel_path, tweet_id = req_path.split(':')
@@ -199,7 +212,7 @@ def raw(req_path):
 @app.route('/<path:req_path>')
 @login_required
 def index(req_path):
-    base_dir = Config.get()['output_dir']
+    base_dir = os.getenv('TC_WEB_DATA') or os.getenv('HOME')
 
     # Joining the base and the requested path
     abs_path = os.path.expanduser(os.path.join(base_dir, req_path))
