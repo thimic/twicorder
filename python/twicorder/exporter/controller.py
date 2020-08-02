@@ -118,13 +118,15 @@ class Exporter:
         tokens = [t for t in raw_file.split(os.sep) if t]
         if len(tokens) == 2 and tokens[0] == 'stream':
             return 'st'
-        elif len(tokens) == 3:
-            if tokens[1] == 'timeline':
+        elif len(tokens) == 4:
+            if tokens[2] == 'timeline':
                 return 'tl'
-            elif tokens[1] == 'mentions':
+            elif tokens[2] == 'mentions':
                 return 'mt'
-            elif tokens[1] == 'replies':
+            elif tokens[2] == 'replies':
                 return 'rp'
+            elif tokens[1] == 'hashtags':
+                return 'ht'
 
     @staticmethod
     def _get_tweet_text(tweet_obj):
