@@ -8,20 +8,17 @@ import re
 import time
 
 from datetime import datetime, timedelta, timezone
-from http.client import IncompleteRead
 
 from tweepy import Stream
 from tweepy.api import API
-from tweepy.error import TweepError
+from tweepy.error import TweepError, RateLimitError
 from tweepy.streaming import StreamListener, ReadBuffer
 
 from twicorder import mongo
 from twicorder import utils
-from twicorder.auth import get_auth_handler
 from twicorder.config import Config
 from twicorder.constants import TW_TIME_FORMAT
-
-logger = utils.FileLogger.get()
+from twicorder.utils import TwiLogger
 
 
 class TwicorderListener(StreamListener):
@@ -35,12 +32,16 @@ class TwicorderListener(StreamListener):
             api (tweepy.api.API): Tweepy API instance
 
         """
-        self.api = api or API(auth)
-        self._config = Config()
+        self.api = api or API(
+            auth_handler=auth,
+            wait_on_rate_limit=True,
+            wait_on_rate_limit_notify=True
+        )
         self._data = []
         self._users = {}
         self._file_name = None
         self._mongo_collection = None
+        self._rate_limit_retry_count = 0
 
     @property
     def config(self):
@@ -51,7 +52,7 @@ class TwicorderListener(StreamListener):
             dict: Config object
 
         """
-        return self._config.get()
+        return Config.get()
 
     @property
     def users(self):
@@ -79,7 +80,7 @@ class TwicorderListener(StreamListener):
         return self._users
 
     @property
-    def save_dir(self):
+    def output_dir(self):
         """
         Save location for captured data. Set in config file.
 
@@ -87,10 +88,7 @@ class TwicorderListener(StreamListener):
             str: Path to save location for captured data
 
         """
-        save_dir = os.path.expanduser(
-            os.path.join(self.config['save_dir'], 'stream')
-        )
-        return save_dir
+        return self.config['output_dir']
 
     @property
     def save_prefix(self):
@@ -208,7 +206,13 @@ class TwicorderListener(StreamListener):
                 for mention in data[key]:
                     user_id = mention['id_str']
                     if user_id not in self.users:
-                        user_json = self.api.get_user(mention['id_str'])._json
+                        try:
+                            user_json = self.api.get_user(mention['id_str'])._json
+                        except RateLimitError:
+                            time.sleep(5)
+                            continue
+                        except Exception:
+                            continue
                         user_json['recorded_at'] = created_at
                         self.users[user_json['id_str']] = user_json
                         mention.update(self.users[user_id])
@@ -227,7 +231,9 @@ class TwicorderListener(StreamListener):
             bool: True if successful
 
         """
-        file_path = os.path.join(self.save_dir, self.file_name)
+        self._rate_limit_retry_count = 0
+        os.makedirs(self.output_dir, exist_ok=True)
+        file_path = os.path.join(self.output_dir, self.file_name)
         data = json.loads(json_data)
         if data.get('created_at'):
             users = utils.collect_key_values('user', data)
@@ -249,7 +255,7 @@ class TwicorderListener(StreamListener):
                         upsert=True
                     )
                 except Exception:
-                    logger.exception(
+                    TwiLogger.exception(
                         'Twicorder Listener: Unable to connect to MongoDB: '
                     )
 
@@ -260,7 +266,8 @@ class TwicorderListener(StreamListener):
         if not tweet:
             return True
         user = data.get('user', {}).get('screen_name', '-')
-        print(u'{}, @{}: {}'.format(timestamp, user, tweet.replace('\n', ' ')))
+        oneline_tweet = tweet.replace('\n', ' ')
+        TwiLogger.info(f'{timestamp}, @{user}: {oneline_tweet}')
         return True
 
     def on_error(self, status_code):
@@ -279,9 +286,11 @@ class TwicorderListener(StreamListener):
         """
         message = 'Twitter error code: {}'.format(status_code)
         if status_code == 420:
-            message = "Rate limitation in effect. Pausing for 5 seconds..."
+            wait = 2**self._rate_limit_retry_count
+            message = f'Rate limit in effect. Pausing for {wait} seconds...'
             utils.message(body=message)
-            time.sleep(5)
+            time.sleep(wait)
+            self._rate_limit_retry_count += 1
             return True
         utils.message(body=message)
         return True
@@ -294,7 +303,6 @@ class TwicorderStream(Stream):
         msg = 'Listener starting at {:%d %b %Y %H:%M:%S}'.format(datetime.now())
         utils.message('Info', msg)
         self.api = API(auth)
-        self._config = Config()
         self._id_to_screenname_time = None
         self._id_to_screenname = {}
         stream_mode = self.config.get('stream_mode') or 'filter'
@@ -330,10 +338,11 @@ class TwicorderStream(Stream):
             length = 0
             try:
                 while not resp.raw.closed:
-                    line = buf.read_line()
-                    stripped_line = line.strip() if line else line # line is sometimes None so we need to check here
+                    line = buf.read_line() or ''
+                    stripped_line = line.strip()
                     if not stripped_line:
-                        self.listener.keep_alive()  # keep-alive new lines are expected
+                        # keep-alive new lines are expected
+                        self.listener.keep_alive()
                     elif stripped_line.isdigit():
                         length = int(stripped_line)
                         break
@@ -342,7 +351,7 @@ class TwicorderStream(Stream):
 
                 next_status_obj = buf.read_len(length)
             except Exception as error:
-                print(error)
+                TwiLogger.exception('Unable to process response: \n')
                 continue
             if self.running and next_status_obj:
                 self._data(next_status_obj)
@@ -352,7 +361,7 @@ class TwicorderStream(Stream):
 
     @property
     def config(self):
-        return self._config.get()
+        return Config.get()
 
     @property
     def id_to_screenname(self):
@@ -365,7 +374,7 @@ class TwicorderStream(Stream):
             user = self.api.get_user(follow_id)
             self._id_to_screenname[follow_id] = '@{}'.format(user.screen_name)
         self._id_to_screenname_time = datetime.now()
-        print(self._id_to_screenname)
+        TwiLogger.info(self._id_to_screenname)
         return self._id_to_screenname
 
     @property
@@ -373,7 +382,7 @@ class TwicorderStream(Stream):
         track_list = [t for t in self.config.get('track') or [] if t] or None
         if track_list and self.follow_also_tracks:
             track_list += self.id_to_screenname.values()
-        print('Tracking: ', track_list)
+        TwiLogger.info('Tracking: ', track_list)
         return track_list
 
     @property
@@ -403,10 +412,3 @@ class TwicorderStream(Stream):
     @property
     def follow_also_tracks(self):
         return self.config.get('follow_also_tracks', False)
-
-
-if __name__ == '__main__':
-    auth = get_auth_handler()
-    listener = TwicorderListener(auth=auth)
-    twitter_stream = TwicorderStream(auth, listener)
-    twitter_stream.filter(track=['the'])

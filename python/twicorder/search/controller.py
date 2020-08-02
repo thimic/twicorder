@@ -5,9 +5,7 @@ import time
 import traceback
 
 from twicorder.search.scheduler import Scheduler
-from twicorder.utils import FileLogger
-
-logger = FileLogger.get()
+from twicorder.utils import TwiLogger
 
 
 class Twicorder(object):
@@ -27,7 +25,7 @@ if __name__ == '__main__':
     #         twicorder = Twicorder()
     #         twicorder.run()
     #     except Exception:
-    #         logger.exception(traceback.format_exc())
-    #         logger.critical('A fatal error occured. Restarting TwiCorder.')
+    #         TwiLogger.exception(traceback.format_exc())
+    #         TwiLogger.critical('A fatal error occured. Restarting TwiCorder.')
     #     time.sleep(10)
 

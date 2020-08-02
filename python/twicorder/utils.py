@@ -8,36 +8,81 @@ import sys
 
 from datetime import datetime
 from gzip import GzipFile
-from logging import FileHandler, StreamHandler
+from logging import StreamHandler, Logger
+from logging.handlers import RotatingFileHandler
+from typing import Optional
 
 from twicorder.constants import (
-    REGULAR_EXTENSIONS, COMPRESSED_EXTENSIONS, USER_DIR, TW_TIME_FORMAT
+    COMPRESSED_EXTENSIONS,
+    REGULAR_EXTENSIONS,
+    TW_TIME_FORMAT,
 )
+from twicorder.config import Config
 
 
-class FileLogger(object):
+class TwiLogger:
 
-    @staticmethod
-    def get():
-        log_path = os.path.join(USER_DIR, 'logs', 'twicorder.log')
-        if not os.path.exists(os.path.dirname(log_path)):
-            os.makedirs(os.path.dirname(log_path))
-        logger = logging.getLogger('TwiCorder')
-        file_handler = FileHandler(log_path)
+    _logger: Optional[Logger] = None
+
+    @classmethod
+    def setup(cls):
+        config = Config.get()
+        log_path = os.path.join(config['project_dir'], 'logs', 'twicorder.log')
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        cls._logger = logging.getLogger('TwiCorder')
+        file_handler = RotatingFileHandler(
+            filename=log_path,
+            maxBytes=1024*1024*10,
+            backupCount=10
+        )
         formatter = logging.Formatter(
             '%(asctime)s: [%(levelname)s] %(message)s'
         )
         file_handler.setFormatter(formatter)
         file_handler.setLevel(logging.WARNING)
-        logger.addHandler(file_handler)
+        cls._logger.addHandler(file_handler)
 
         stream_handler = StreamHandler(sys.stdout)
         stream_handler.setLevel(logging.DEBUG)
-        logger.addHandler(stream_handler)
+        cls._logger.addHandler(stream_handler)
 
-        logger.setLevel(logging.DEBUG)
+        cls._logger.setLevel(logging.DEBUG)
 
-        return logger
+    @classmethod
+    def debug(cls, *args, **kwargs):
+        if not cls._logger:
+            cls.setup()
+        cls._logger.debug(*args, **kwargs)
+
+    @classmethod
+    def info(cls, *args, **kwargs):
+        if not cls._logger:
+            cls.setup()
+        cls._logger.info(*args, **kwargs)
+
+    @classmethod
+    def warning(cls, *args, **kwargs):
+        if not cls._logger:
+            cls.setup()
+        cls._logger.warning(*args, **kwargs)
+
+    @classmethod
+    def error(cls, *args, **kwargs):
+        if not cls._logger:
+            cls.setup()
+        cls._logger.error(*args, **kwargs)
+
+    @classmethod
+    def critical(cls, *args, **kwargs):
+        if not cls._logger:
+            cls.setup()
+        cls._logger.critical(*args, **kwargs)
+
+    @classmethod
+    def exception(cls, *args, **kwargs):
+        if not cls._logger:
+            cls.setup()
+        cls._logger.exception(*args, **kwargs)
 
 
 class Singleton(type):
@@ -61,16 +106,15 @@ def auto_commit(func):
     return func_wrapper
 
 
-class AppData(object):
+class AppData:
     """
     Class for reading and writing AppData to be used between sessions.
     """
 
-    _data_path = os.path.join(USER_DIR, 'AppData')
-
     def __init__(self):
-        if not os.path.exists(self._data_path):
-            os.makedirs(self._data_path)
+        self._config = Config.get()
+        self._data_path = os.path.join(self._config['appdata'])
+        os.makedirs(self._data_path, exist_ok=True)
         filepath = os.path.join(self._data_path, 'twicorder.sql')
         self._conn = sqlite3.connect(
             filepath,
@@ -276,7 +320,7 @@ def message(title='Warning', body='', width=80):
         '{}\n'
         '\n'
     )
-    print(text.format(header, body, footer))
+    TwiLogger.warning(text.format(header, body, footer))
 
 
 def collect_key_values(key, data):

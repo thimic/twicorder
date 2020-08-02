@@ -66,7 +66,7 @@ class TwiModel(object):
     @property
     def location(self):
         if not self._location:
-            # self._location = os.path.expanduser(self._config.get('save_dir'))
+            # self._location = os.path.expanduser(self._config.get('output_dir'))
             self._location = os.path.expanduser('~/Desktop')
         return self._location
 

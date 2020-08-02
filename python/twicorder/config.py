@@ -5,7 +5,7 @@ import datetime
 import os
 import yaml
 
-from twicorder.constants import CONFIG_DIR
+from typing import Optional
 
 
 class Config(object):
@@ -16,9 +16,25 @@ class Config(object):
 
     _cache = None
     _cache_time = None
+    _config_dir = None
+    _project_dir = None
 
-    @staticmethod
-    def _load():
+    @classmethod
+    def setup(cls, project_dir: str, config_dir: Optional[str] = None):
+        """
+        Set up Config class with the given file paths. Config defaults to the
+        project dir, but can also be specified separately.
+
+        Args:
+            project_dir: Project directory
+            config_dir: Config file directory
+
+        """
+        cls._config_dir = config_dir or project_dir
+        cls._project_dir = project_dir
+
+    @classmethod
+    def _load(cls):
         """
         Reading config file from disk and parsing to a dictionary using the
         yaml module.
@@ -27,9 +43,13 @@ class Config(object):
             dict: Config object
 
         """
-        listener_path = os.path.join(CONFIG_DIR, 'preferences.yaml')
+        listener_path = os.path.join(cls._config_dir, 'config.yaml')
         with open(listener_path, 'r') as stream:
             config = yaml.safe_load(stream)
+        config['project_dir'] = cls._project_dir
+        config['appdata_dir'] = os.path.join(cls._project_dir, 'appdata')
+        config['output_dir'] = os.path.join(cls._project_dir, 'output')
+        config['log_dir'] = os.path.join(cls._project_dir, 'logs')
         return config
 
     @classmethod

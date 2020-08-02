@@ -13,13 +13,11 @@ from subprocess import check_output
 from twicorder import mongo
 from twicorder.config import Config
 from twicorder.constants import TW_TIME_FORMAT
-from twicorder.utils import readlines, FileLogger
+from twicorder.utils import readlines, TwiLogger
 from twicorder.web.browser import app, db
 from twicorder.web.browser.forms import LoginForm, RegistrationForm
 from twicorder.web.browser.models import User
 from werkzeug.urls import url_parse
-
-logger = FileLogger.get()
 
 
 def sizeof_fmt(num, suffix='B'):
@@ -164,7 +162,7 @@ def stats():
         date_count = sorted([f'[ new {k}, {v} ],' for k, v in counter.items()])
         return render_template('stats.html', title='Stats', data=data, date_count='\n'.join(date_count))
     except Exception:
-        logger.exception('TwiBrowser stats error: ')
+        TwiLogger.exception('TwiBrowser stats error: ')
         return redirect(url_for('index'))
 
 
@@ -172,7 +170,7 @@ def stats():
 @app.route('/raw/<path:req_path>')
 @login_required
 def raw(req_path):
-    base_dir = Config.get()['save_dir']
+    base_dir = Config.get()['output_dir']
 
     # Joining the base and the requested path
     rel_path, tweet_id = req_path.split(':')
@@ -201,7 +199,7 @@ def raw(req_path):
 @app.route('/<path:req_path>')
 @login_required
 def index(req_path):
-    base_dir = Config.get()['save_dir']
+    base_dir = Config.get()['output_dir']
 
     # Joining the base and the requested path
     abs_path = os.path.expanduser(os.path.join(base_dir, req_path))
