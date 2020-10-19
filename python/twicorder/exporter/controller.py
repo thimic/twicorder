@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import faulthandler
 import glob
 import json
 import os
@@ -9,6 +10,7 @@ import click
 
 from collections import Counter
 from datetime import datetime
+from enum import Enum
 from statistics import mean
 
 from sqlalchemy import create_engine, exists, MetaData, Table
@@ -36,8 +38,14 @@ from twicorder.utils import readlines, str_to_date
 
 class Exporter:
 
-    def __init__(self, raw_data_path, output_path, autostart=False,
-                 new_only=False):
+    class Type(Enum):
+        Tweet = 'tweet'
+        User = 'user'
+
+    def __init__(self, raw_data_path: str, output_path: str,
+                 export_type: Type = Type.Tweet,
+                 autostart: bool = False, new_only: bool = False):
+        self._export_type = export_type
         self._new_only = new_only
         self._db_date = 0.0
         if os.path.isfile(output_path):
@@ -50,7 +58,9 @@ class Exporter:
         self.session = DBSession()
         self.stats = {
             'skipped_tweets': 0,
-            'exported_tweets': 0
+            'exported_tweets': 0,
+            'exported_users': 0,
+            'skipped_users': 0
         }
         self._tweet_id_buffer = set()
         self._raw_data_path = raw_data_path
@@ -329,6 +339,7 @@ class Exporter:
 
     def register_user(self, user_obj, tweet_id, endpoint, capture_date=None):
         if 'created_at' not in user_obj:
+            self.stats['skipped_users'] += 1
             return
         user = User(
             user_id=user_obj['id'],
@@ -354,6 +365,7 @@ class Exporter:
             tweet_id=tweet_id
         )
         self.session.add(user)
+        self.stats['exported_users'] += 1
         return user
 
     def register_hashtag(self, hashtag_obj, tweet_id):
@@ -443,7 +455,7 @@ class Exporter:
         ingested_files = self._get_ingested_files()
         file_paths = self._collect_file_paths()
         t0 = datetime.now()
-        print('')
+        click.echo('')
         progress_iter = tqdm(
             iterable=file_paths,
             desc='Exporting',
@@ -455,31 +467,48 @@ class Exporter:
             try:
                 lines = readlines(file_path)
             except Exception:
-                print(' Failed to read '.center(80, '='))
-                print(raw_file)
-                print('=' * 80)
+                click.echo(' Failed to read '.center(80, '='))
+                click.echo(raw_file)
+                click.echo('=' * 80)
                 raise
+            mtime = datetime.fromtimestamp(os.path.getmtime(file_path))
             for idx, line in enumerate(lines):
                 if idx + 1 < ingested_files.get(raw_file, 0):
-                    print(f'Already ingested: {raw_file}:{idx + 1}')
+                    click.echo(f'Already ingested: {raw_file}:{idx + 1}')
                     continue
                 try:
                     data = json.loads(line)
                 except Exception as error:
-                    print(error)
+                    click.echo(error)
                     continue
                 if not data.get('id'):
                     # Don't bother with delete messages
                     continue
-                tweet = self.register_tweet(data, raw_file, idx + 1)
+                if self._export_type == Exporter.Type.Tweet:
+                    tweet = self.register_tweet(data, raw_file, idx + 1)
+                elif self._export_type == Exporter.Type.User:
+                    user = self.register_user(
+                        user_obj=data,
+                        tweet_id=None,
+                        endpoint='ul',
+                        capture_date=mtime
+                    )
+
             self.session.commit()
 
-        print(
+        formatter = {
+            'type': f'{self._export_type.value}',
+            'skipped': self.stats[f'skipped_{self._export_type.value}s'],
+            'exported': self.stats[f'exported_{self._export_type.value}s'],
+            'time': datetime.now() - t0
+        }
+
+        click.echo(
             '\n'
-            'Total exported tweets: {exported_tweets}\n'
-            'Duplicate tweets skipped: {skipped_tweets}\n'
+            'Total exported {type}s: {exported}\n'
+            'Duplicate {type}s skipped: {skipped}\n'
             'Total export time: {time}'
-            .format(time=datetime.now() - t0, **self.stats)
+            .format_map(formatter)
         )
 
 
@@ -497,9 +526,9 @@ def expand_path(path: str) -> str:
     return os.path.expanduser(os.path.expandvars(path))
 
 
-@click.command()
-@click.argument('raw_data_dir', required=True, envvar='TC_EXPORT_IN')
-@click.argument('output_dir', required=True, envvar='TC_EXPORT_OUT')
+@click.group()
+@click.option('--input-dir', required=True, help='Raw data directory.')
+@click.option('--output-dir', required=True, help='Export directory')
 @click.option(
     '--new-only',
     is_flag=True,
@@ -507,17 +536,55 @@ def expand_path(path: str) -> str:
     show_default=True,
     help=(
         'If a database file exists, only export raw files created after the '
-        'database'
+        'database was last modified.'
     )
 )
-def main(raw_data_dir: str, output_dir: str, new_only: bool):
+@click.pass_context
+def cli(ctx: click.Context, input_dir: str, output_dir: str, new_only: bool):
     """
     Twicorder raw data to SQLite exporter
     """
-    raw_data_dir = expand_path(raw_data_dir)
-    output_dir = expand_path(output_dir)
-    if not os.path.isdir(raw_data_dir):
-        click.echo(f'Raw data path was not found: {raw_data_dir!r}')
+    faulthandler.enable()
+    ctx.obj = dict(input_dir=input_dir, output_dir=output_dir, new_only=new_only)
+
+
+@cli.command()
+@click.pass_context
+def users(ctx: click.Context):
+    """
+    User exporter
+    """
+    input_dir = expand_path(ctx.obj['input_dir'])
+    output_dir = expand_path(ctx.obj['output_dir'])
+    if not os.path.isdir(input_dir):
+        click.echo(f'Raw data path was not found: {input_dir!r}')
+        return
+    if not os.path.isdir(output_dir):
+        try:
+            os.makedirs(output_dir)
+        except Exception:
+            click.echo(f'Unable to find or create output dir: {output_dir!r}')
+            return
+    output_path = os.path.join(output_dir, 'users.db')
+    Exporter(
+        input_dir,
+        output_path,
+        export_type=Exporter.Type.User,
+        autostart=True,
+        new_only=ctx.obj['new_only']
+    )
+
+
+@cli.command()
+@click.pass_context
+def tweets(ctx: click.Context):
+    """
+    Tweet exporter
+    """
+    input_dir = expand_path(ctx.obj['input_dir'])
+    output_dir = expand_path(ctx.obj['output_dir'])
+    if not os.path.isdir(input_dir):
+        click.echo(f'Raw data path was not found: {input_dir!r}')
         return
     if not os.path.isdir(output_dir):
         try:
@@ -526,8 +593,14 @@ def main(raw_data_dir: str, output_dir: str, new_only: bool):
             click.echo(f'Unable to find or create output dir: {output_dir!r}')
             return
     output_path = os.path.join(output_dir, 'tweets.db')
-    Exporter(raw_data_dir, output_path, autostart=True, new_only=new_only)
+    Exporter(
+        input_dir,
+        output_path,
+        export_type=Exporter.Type.Tweet,
+        autostart=True,
+        new_only=ctx.obj['new_only']
+    )
 
 
 if __name__ == '__main__':
-    main(auto_envvar_prefix='TC_EXPORT')
+    cli(auto_envvar_prefix='TC_EXPORT')

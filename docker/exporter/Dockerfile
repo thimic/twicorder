@@ -9,8 +9,8 @@ COPY python ./python
 
 ENV PYTHONPATH "${PYTONPATH}:/usr/src/twicorder/python"
 
-ENV TC_EXPORT_IN "/data/in"
-ENV TC_EXPORT_OUT "/data/out"
+ENV TC_EXPORT_INPUT_DIR "/data/in"
+ENV TC_EXPORT_OUTPUT_DIR "/data/out"
 ENV TC_EXPORT_NEW_ONLY "true"
 
-CMD [ "python", "./python/twicorder/exporter/controller.py" ]
+CMD [ "python", "./python/twicorder/exporter/controller.py", "tweets" ]
