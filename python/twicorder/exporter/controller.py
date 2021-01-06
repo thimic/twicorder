@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import faulthandler
-import glob
 import json
 import os
 
@@ -11,12 +10,15 @@ import click
 from collections import Counter
 from datetime import datetime
 from enum import Enum
+from pathlib import Path
 from statistics import mean
 
-from sqlalchemy import create_engine, exists, MetaData, Table
+from sqlalchemy import create_engine, exists
 from sqlalchemy.orm import sessionmaker
 
 from tqdm import tqdm
+
+from typing import List, Optional
 
 from twicorder.constants import (
     COMPRESSED_EXTENSIONS,
@@ -42,14 +44,16 @@ class Exporter:
         Tweet = 'tweet'
         User = 'user'
 
-    def __init__(self, raw_data_path: str, output_path: str,
+    def __init__(self, raw_data_path: Path, output_path: Path,
                  export_type: Type = Type.Tweet,
-                 autostart: bool = False, new_only: bool = False):
+                 autostart: bool = False, new_only: bool = False,
+                 filter_file: Optional[Path] = None):
         self._export_type = export_type
         self._new_only = new_only
+        self._filter_file = filter_file
         self._db_date = 0.0
-        if os.path.isfile(output_path):
-            self._db_date = os.path.getmtime(output_path)
+        if output_path.is_file():
+            self._db_date = output_path.stat().st_mtime
         sqlite_path = f'sqlite:///{output_path}'
         engine = create_engine(sqlite_path)
         create_tables(engine)
@@ -69,7 +73,7 @@ class Exporter:
             self.start()
 
     @property
-    def root_path(self):
+    def root_path(self) -> Path:
         return self._raw_data_path
 
     @property
@@ -84,7 +88,7 @@ class Exporter:
         """
         return self._tweet_id_buffer
 
-    def _collect_file_paths(self):
+    def _collect_file_paths(self) -> List[Path]:
         """
         Collecting a list of all files to be ingested into database.
 
@@ -92,18 +96,22 @@ class Exporter:
             list[str]: List of file paths
 
         """
+        search_pattern = str(Path('**').joinpath('*.*'))
+        if self._filter_file and self._filter_file.is_file():
+            top_dirs = self._filter_file.read_text().splitlines(keepends=False)
+            paths = []
+            for top_dir in top_dirs:
+                paths += list(self.root_path.joinpath(top_dir).glob(str(search_pattern)))
+        else:
+            paths = self.root_path.glob(str(search_pattern))
         extensions = REGULAR_EXTENSIONS + COMPRESSED_EXTENSIONS
-        search_pattern = os.path.join(self.root_path, '**', '*.*')
-        paths = glob.glob(search_pattern, recursive=True)
-        paths = [
-            p for p in paths if os.path.splitext(p)[-1].strip('.') in extensions
-        ]
+        paths = [p for p in paths if p.suffix.lstrip('.') in extensions]
         if self._new_only:
             hour = 3600
             grace_period = 6 * hour
             paths = [
                 p for p in paths
-                if os.path.getmtime(p) > self._db_date - grace_period
+                if p.stat().st_mtime > self._db_date - grace_period
             ]
         return sorted(paths)
 
@@ -124,8 +132,8 @@ class Exporter:
         return tweet_type
 
     @staticmethod
-    def _get_endpoint(raw_file):
-        tokens = [t for t in raw_file.split(os.sep) if t]
+    def _get_endpoint(raw_file: Path):
+        tokens = [t for t in raw_file.parts if t]
         if len(tokens) == 2 and tokens[0] == 'stream':
             return 'st'
         elif len(tokens) == 4:
@@ -463,7 +471,7 @@ class Exporter:
         )
         for file_path in progress_iter:
             self.tweet_id_buffer.clear()
-            raw_file = file_path.replace(self.root_path, '')
+            raw_file = file_path.relative_to(self.root_path)
             try:
                 lines = readlines(file_path)
             except Exception:
@@ -471,7 +479,7 @@ class Exporter:
                 click.echo(raw_file)
                 click.echo('=' * 80)
                 raise
-            mtime = datetime.fromtimestamp(os.path.getmtime(file_path))
+            mtime = datetime.fromtimestamp(file_path.stat().st_mtime)
             for idx, line in enumerate(lines):
                 if idx + 1 < ingested_files.get(raw_file, 0):
                     click.echo(f'Already ingested: {raw_file}:{idx + 1}')
@@ -554,18 +562,18 @@ def users(ctx: click.Context):
     """
     User exporter
     """
-    input_dir = expand_path(ctx.obj['input_dir'])
-    output_dir = expand_path(ctx.obj['output_dir'])
-    if not os.path.isdir(input_dir):
+    input_dir = Path(expand_path(ctx.obj['input_dir']))
+    output_dir = Path(expand_path(ctx.obj['output_dir']))
+    if not input_dir.exists() and not input_dir.is_dir():
         click.echo(f'Raw data path was not found: {input_dir!r}')
         return
-    if not os.path.isdir(output_dir):
+    if not output_dir.exists() and not output_dir.is_dir():
         try:
-            os.makedirs(output_dir)
+            output_dir.mkdir()
         except Exception:
             click.echo(f'Unable to find or create output dir: {output_dir!r}')
             return
-    output_path = os.path.join(output_dir, 'users.db')
+    output_path = output_dir.joinpath('users.db')
     Exporter(
         input_dir,
         output_path,
@@ -577,28 +585,34 @@ def users(ctx: click.Context):
 
 @cli.command()
 @click.pass_context
-def tweets(ctx: click.Context):
+@click.option(
+    '--filter-file',
+    default=None,
+    help='File with line separated top folder names to search'
+)
+def tweets(ctx: click.Context, filter_file: Optional[str]):
     """
     Tweet exporter
     """
-    input_dir = expand_path(ctx.obj['input_dir'])
-    output_dir = expand_path(ctx.obj['output_dir'])
-    if not os.path.isdir(input_dir):
+    input_dir = Path(expand_path(ctx.obj['input_dir']))
+    output_dir = Path(expand_path(ctx.obj['output_dir']))
+    if not input_dir.exists() and not input_dir.is_dir():
         click.echo(f'Raw data path was not found: {input_dir!r}')
         return
-    if not os.path.isdir(output_dir):
+    if not output_dir.exists() and not output_dir.is_dir():
         try:
-            os.makedirs(output_dir)
+            output_dir.mkdir()
         except Exception:
             click.echo(f'Unable to find or create output dir: {output_dir!r}')
             return
-    output_path = os.path.join(output_dir, 'tweets.db')
+    output_path = output_dir.joinpath('tweets.db')
     Exporter(
         input_dir,
         output_path,
         export_type=Exporter.Type.Tweet,
         autostart=True,
-        new_only=ctx.obj['new_only']
+        new_only=ctx.obj['new_only'],
+        filter_file=Path(filter_file) if filter_file else None
     )
 
 

@@ -1,0 +1,16 @@
+version: "3"
+
+services:
+  twicorder-export:
+    build: .
+    image: twicorder-export:latest
+    container_name: twicorder-export
+    network_mode: bridge
+    user: "501:20"
+    environment:
+      - TC_EXPORT_NEW_ONLY=false
+      - TC_EXPORT_TWEETS_FILTER_FILE=/data/filter/NHMC.txt
+    volumes:
+      - /Users/thimic/Desktop/test/output/user_timelines:/data/in:ro
+      - /Users/thimic/Desktop/test/db:/data/out
+      - /Users/thimic/Developer/ProjectData/SMC/followers/19.10.2020/ids:/data/filter

@@ -11,7 +11,7 @@ ENV PYTHONPATH "${PYTONPATH}:/usr/src/twicorder/python"
 
 ENV TC_EXPORT_INPUT_DIR "/data/in"
 ENV TC_EXPORT_OUTPUT_DIR "/data/out"
-ENV TC_EXPORT_NEW_ONLY "true"
+ENV TC_EXPORT_NEW_ONLY "false"
 ENV TC_EXPORT_TWEETS_FILTER_FILE ""
 
 CMD [ "python", "./python/twicorder/exporter/controller.py", "tweets" ]
