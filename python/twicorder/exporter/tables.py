@@ -32,11 +32,11 @@ class Tweet(Base):
     # Primary Key
     tweet_id = Column(BigInteger, primary_key=True, index=True)
 
-    primary_capture = Column(Boolean, index=True)
+    primary_capture = Column(Boolean)
     endpoint = Column(String(2), index=True)
     created_at = Column(DateTime, index=True)
     tweet_type = Column(String(2), default='tw', index=True)
-    text = Column(String(1024), index=True)
+    text = Column(String(2048))
 
     # Foreign Keys
     user_unique_id = Column(BigInteger, ForeignKey('users.unique_id'), index=True)
@@ -48,39 +48,39 @@ class Tweet(Base):
     in_reply_to_user_id = Column(BigInteger)
     in_reply_to_screen_name = Column(String(64))
 
-    hashtags_str = Column(String(512))
-    hashtag_count = Column(Integer, default=0, index=True)
+    hashtags_str = Column(String(2048))
+    hashtag_count = Column(Integer, default=0)
 
-    url_count = Column(Integer, default=0, index=True)
-    media_count = Column(Integer, default=0, index=True)
+    url_count = Column(Integer, default=0)
+    media_count = Column(Integer, default=0)
 
     retweet_status_id = Column(BigInteger, ForeignKey('tweets.tweet_id'))
-    is_quote_status = Column(Boolean, index=True)
+    is_quote_status = Column(Boolean)
     quoted_status_id = Column(BigInteger, ForeignKey('tweets.tweet_id'))
 
-    mention_count = Column(SmallInteger, index=True)
-    retweet_count = Column(Integer, index=True)
-    favorite_count = Column(Integer, index=True)
+    mention_count = Column(SmallInteger)
+    retweet_count = Column(Integer)
+    favorite_count = Column(Integer)
 
-    lang = Column(String(8), index=True)
-    possibly_sensitive = Column(Boolean, index=True, default=False)
+    lang = Column(String(8))
+    possibly_sensitive = Column(Boolean, default=False)
 
-    display_start = Column(SmallInteger, index=True)
-    display_end = Column(SmallInteger, index=True)
-    character_count = Column(SmallInteger, index=True)
+    display_start = Column(SmallInteger)
+    display_end = Column(SmallInteger)
+    character_count = Column(SmallInteger)
 
-    coordinates = Column(Boolean, index=True)
+    coordinates = Column(Boolean)
     place_id = Column(String(256))
     place_type = Column(String(64))
     place_full_name = Column(String(256))
-    country_code = Column(String(2), index=True)
-    latitude = Column(Float, index=True)
-    longitude = Column(Float, index=True)
+    country_code = Column(String(2))
+    latitude = Column(Float)
+    longitude = Column(Float)
 
-    withheld_copyright = Column(Boolean, index=True)
+    withheld_copyright = Column(Boolean)
     withheld_in_countries_str = Column(String(256))
 
-    raw_file = Column(String(128))
+    raw_file = Column(String(256))
 
     # Relationships
     # user = relationship('User', uselist=False, back_populates='tweets')
@@ -98,23 +98,23 @@ class User(Base):
     user_id = Column(BigInteger, index=True)
     name = Column(String(64), index=True)
     screen_name = Column(String(64), index=True)
-    endpoint = Column(String(2), index=True)
+    endpoint = Column(String(2))
     capture_date = Column(DateTime)
     location = Column(String(256))
     description = Column(String(512))
     url = Column(String(256))
-    protected = Column(Boolean, index=True)
-    followers_count = Column(Integer, index=True)
-    friends_count = Column(Integer, index=True)
-    listed_count = Column(Integer, index=True)
-    favourites_count = Column(Integer, index=True)
+    protected = Column(Boolean)
+    followers_count = Column(Integer)
+    friends_count = Column(Integer)
+    listed_count = Column(Integer)
+    favourites_count = Column(Integer)
 
     created_at = Column(DateTime, index=True)
-    verified = Column(Boolean, index=True)
-    statuses_count = Column(Integer, index=True)
-    lang = Column(String(8), index=True)
-    geo_enabled = Column(Boolean, index=True)
-    contributors_enabled = Column(Boolean, index=True)
+    verified = Column(Boolean)
+    statuses_count = Column(Integer)
+    lang = Column(String(8))
+    geo_enabled = Column(Boolean)
+    contributors_enabled = Column(Boolean)
     withheld_in_countries = Column(String(256))
     # tweet_id = Column(BigInteger, ForeignKey('tweets.tweet_id'))
     tweet_id = Column(BigInteger)
@@ -140,8 +140,8 @@ class Mention(Base):
     tweet_id = Column(BigInteger, index=True)
 
     user_id = Column(BigInteger, index=True)
-    display_start = Column(SmallInteger, index=True)
-    display_end = Column(SmallInteger, index=True)
+    display_start = Column(SmallInteger)
+    display_end = Column(SmallInteger)
     name = Column(String(64), index=True)
     screen_name = Column(String(64), index=True)
 
@@ -157,9 +157,9 @@ class Hashtag(Base):
     # Primary key
     hashtag_id = Column(Integer, primary_key=True)
 
-    text = Column(String(512), index=True)
-    display_start = Column(SmallInteger, index=True)
-    display_end = Column(SmallInteger, index=True)
+    text = Column(String(2048), index=True)
+    display_start = Column(SmallInteger)
+    display_end = Column(SmallInteger)
     # tweet_id = Column(BigInteger, ForeignKey('tweets.tweet_id'))
     tweet_id = Column(BigInteger)
 
@@ -174,9 +174,9 @@ class Symbol(Base):
     # Primary key
     symbol_id = Column(Integer, primary_key=True)
 
-    text = Column(String(512), index=True)
-    display_start = Column(SmallInteger, index=True)
-    display_end = Column(SmallInteger, index=True)
+    text = Column(String(2048), index=True)
+    display_start = Column(SmallInteger)
+    display_end = Column(SmallInteger)
     # tweet_id = Column(BigInteger, ForeignKey('tweets.tweet_id'))
     tweet_id = Column(BigInteger)
 
@@ -196,8 +196,8 @@ class Media(Base):
     url = Column(String(512), index=True)
     expanded_url = Column(String(2048))
     media_type = Column(String(16), index=True)
-    display_start = Column(SmallInteger, index=True)
-    display_end = Column(SmallInteger, index=True)
+    display_start = Column(SmallInteger)
+    display_end = Column(SmallInteger)
     source_status_id = Column(BigInteger)
     # tweet_id = Column(BigInteger, ForeignKey('tweets.tweet_id'))
     tweet_id = Column(BigInteger)
@@ -215,8 +215,8 @@ class Url(Base):
 
     url = Column(String(512), index=True)
     expanded_url = Column(String(2048))
-    display_start = Column(SmallInteger, index=True)
-    display_end = Column(SmallInteger, index=True)
+    display_start = Column(SmallInteger)
+    display_end = Column(SmallInteger)
     # tweet_id = Column(BigInteger, ForeignKey('tweets.tweet_id'))
     tweet_id = Column(BigInteger)
 
