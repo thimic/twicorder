@@ -44,7 +44,7 @@ class Exporter:
         Tweet = 'tweet'
         User = 'user'
 
-    def __init__(self, raw_data_path: Path, output_path: Path,
+    def __init__(self, raw_data_path: Path, database: str,
                  export_type: Type = Type.Tweet,
                  autostart: bool = False, new_only: bool = False,
                  filter_file: Optional[Path] = None):
@@ -52,10 +52,7 @@ class Exporter:
         self._new_only = new_only
         self._filter_file = filter_file
         self._db_date = 0.0
-        if output_path.is_file():
-            self._db_date = output_path.stat().st_mtime
-        sqlite_path = f'sqlite:///{output_path}'
-        engine = create_engine(sqlite_path)
+        engine = create_engine(database)
         create_tables(engine)
         Base.metadata.bind = engine
         DBSession = sessionmaker(bind=engine)
@@ -536,7 +533,7 @@ def expand_path(path: str) -> str:
 
 @click.group()
 @click.option('--input-dir', required=True, help='Raw data directory.')
-@click.option('--output-dir', required=True, help='Export directory')
+@click.option('--database', required=True, help='Database scheme')
 @click.option(
     '--new-only',
     is_flag=True,
@@ -548,12 +545,12 @@ def expand_path(path: str) -> str:
     )
 )
 @click.pass_context
-def cli(ctx: click.Context, input_dir: str, output_dir: str, new_only: bool):
+def cli(ctx: click.Context, input_dir: str, database: str, new_only: bool):
     """
     Twicorder raw data to SQLite exporter
     """
     faulthandler.enable()
-    ctx.obj = dict(input_dir=input_dir, output_dir=output_dir, new_only=new_only)
+    ctx.obj = dict(input_dir=input_dir, database=database, new_only=new_only)
 
 
 @cli.command()
@@ -563,20 +560,16 @@ def users(ctx: click.Context):
     User exporter
     """
     input_dir = Path(expand_path(ctx.obj['input_dir']))
-    output_dir = Path(expand_path(ctx.obj['output_dir']))
+    database = ctx.obj['database']
     if not input_dir.exists() and not input_dir.is_dir():
         click.echo(f'Raw data path was not found: {input_dir!r}')
         return
-    if not output_dir.exists() and not output_dir.is_dir():
-        try:
-            output_dir.mkdir()
-        except Exception:
-            click.echo(f'Unable to find or create output dir: {output_dir!r}')
-            return
-    output_path = output_dir.joinpath('users.db')
+    if not database:
+        click.echo('No database specified, aborting.')
+        return
     Exporter(
         input_dir,
-        output_path,
+        database,
         export_type=Exporter.Type.User,
         autostart=True,
         new_only=ctx.obj['new_only']
@@ -595,20 +588,16 @@ def tweets(ctx: click.Context, filter_file: Optional[str]):
     Tweet exporter
     """
     input_dir = Path(expand_path(ctx.obj['input_dir']))
-    output_dir = Path(expand_path(ctx.obj['output_dir']))
+    database = ctx.obj['database']
     if not input_dir.exists() and not input_dir.is_dir():
         click.echo(f'Raw data path was not found: {input_dir!r}')
         return
-    if not output_dir.exists() and not output_dir.is_dir():
-        try:
-            output_dir.mkdir()
-        except Exception:
-            click.echo(f'Unable to find or create output dir: {output_dir!r}')
-            return
-    output_path = output_dir.joinpath('tweets.db')
+    if not database:
+        click.echo('No database specified, aborting.')
+        return
     Exporter(
         input_dir,
-        output_path,
+        database,
         export_type=Exporter.Type.Tweet,
         autostart=True,
         new_only=ctx.obj['new_only'],

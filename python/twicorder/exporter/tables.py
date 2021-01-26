@@ -116,7 +116,8 @@ class User(Base):
     geo_enabled = Column(Boolean, index=True)
     contributors_enabled = Column(Boolean, index=True)
     withheld_in_countries = Column(String(256))
-    tweet_id = Column(BigInteger, ForeignKey('tweets.tweet_id'))
+    # tweet_id = Column(BigInteger, ForeignKey('tweets.tweet_id'))
+    tweet_id = Column(BigInteger)
 
     # Releationships
     # tweet = relationship('Tweet', back_populates='users')
@@ -129,12 +130,14 @@ class Mention(Base):
     # Primary key
     mention_id = Column(Integer, primary_key=True)
 
-    unique_user_id = Column(
-        BigInteger, ForeignKey('users.unique_id'), index=True
-    )
-    tweet_id = Column(
-        BigInteger, ForeignKey('tweets.tweet_id'), index=True
-    )
+    # unique_user_id = Column(
+    #     BigInteger, ForeignKey('users.unique_id'), index=True
+    # )
+    # tweet_id = Column(
+    #     BigInteger, ForeignKey('tweets.tweet_id'), index=True
+    # )
+    unique_user_id = Column(BigInteger, index=True)
+    tweet_id = Column(BigInteger, index=True)
 
     user_id = Column(BigInteger, index=True)
     display_start = Column(SmallInteger, index=True)
@@ -157,7 +160,8 @@ class Hashtag(Base):
     text = Column(String(512), index=True)
     display_start = Column(SmallInteger, index=True)
     display_end = Column(SmallInteger, index=True)
-    tweet_id = Column(BigInteger, ForeignKey('tweets.tweet_id'))
+    # tweet_id = Column(BigInteger, ForeignKey('tweets.tweet_id'))
+    tweet_id = Column(BigInteger)
 
     # Releationships
     # tweet = relationship('Tweet', back_populates='hashtags')
@@ -173,7 +177,8 @@ class Symbol(Base):
     text = Column(String(512), index=True)
     display_start = Column(SmallInteger, index=True)
     display_end = Column(SmallInteger, index=True)
-    tweet_id = Column(BigInteger, ForeignKey('tweets.tweet_id'))
+    # tweet_id = Column(BigInteger, ForeignKey('tweets.tweet_id'))
+    tweet_id = Column(BigInteger)
 
     # Releationships
     # tweet = relationship('Tweet', back_populates='symbols')
@@ -194,7 +199,8 @@ class Media(Base):
     display_start = Column(SmallInteger, index=True)
     display_end = Column(SmallInteger, index=True)
     source_status_id = Column(BigInteger)
-    tweet_id = Column(BigInteger, ForeignKey('tweets.tweet_id'))
+    # tweet_id = Column(BigInteger, ForeignKey('tweets.tweet_id'))
+    tweet_id = Column(BigInteger)
 
     # Releationships
     # tweet = relationship('Tweet', back_populates='media')
@@ -211,7 +217,8 @@ class Url(Base):
     expanded_url = Column(String(2048))
     display_start = Column(SmallInteger, index=True)
     display_end = Column(SmallInteger, index=True)
-    tweet_id = Column(BigInteger, ForeignKey('tweets.tweet_id'))
+    # tweet_id = Column(BigInteger, ForeignKey('tweets.tweet_id'))
+    tweet_id = Column(BigInteger)
 
     # Releationships
     # tweet = relationship('Tweet', back_populates='urls')

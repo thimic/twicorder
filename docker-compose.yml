@@ -9,8 +9,8 @@ services:
     user: "501:20"
     environment:
       - TC_EXPORT_NEW_ONLY=false
-      - TC_EXPORT_TWEETS_FILTER_FILE=/data/filter/NHMC.txt
+      - TC_EXPORT_TWEETS_FILTER_FILE=/data/filter/file.txt
+      - TC_EXPORT_DATABASE=postgresql://user:pass@host:port/dbname
     volumes:
-      - /Users/thimic/Desktop/test/output/user_timelines:/data/in:ro
-      - /Users/thimic/Desktop/test/db:/data/out
-      - /Users/thimic/Developer/ProjectData/SMC/followers/19.10.2020/ids:/data/filter
+      - /local/raw_files:/data/in:ro
+      - /local/filter:/data/filter
