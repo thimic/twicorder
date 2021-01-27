@@ -195,12 +195,14 @@ class Exporter:
         tweet_id = tweet_obj['id']
 
         # Skip duplicates
+        ret = None
         try:
             (ret,), = self.session.query(exists().where(Tweet.tweet_id == tweet_id))
         except Exception:
             click.echo(json.dumps(tweet_obj, indent=2), err=True)
             click.echo(f'{tweet_id}', err=True)
-            raise
+            click.echo(f'{raw_file}:{line}', err=True)
+            # raise
         if ret or tweet_id in self.tweet_id_buffer:
             self.stats['skipped_tweets'] += 1
             return
