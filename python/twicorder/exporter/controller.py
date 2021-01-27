@@ -4,6 +4,7 @@
 import faulthandler
 import json
 import os
+import unicodedata
 
 import click
 
@@ -144,7 +145,11 @@ class Exporter:
                 return 'ht'
 
     @staticmethod
-    def _get_tweet_text(tweet_obj):
+    def _sanitise_string(string):
+        return ''.join(c for c in string if unicodedata.category(c)[0]!='C')
+
+    @classmethod
+    def _get_tweet_text(cls, tweet_obj):
         text_obj = tweet_obj.copy()
         if tweet_obj.get('retweeted_status'):
             text_obj = tweet_obj['retweeted_status'].copy()
@@ -152,7 +157,7 @@ class Exporter:
             text_obj = text_obj['extended_tweet']
         text = text_obj.get('full_text', text_obj.get('text'))
         display_range = text_obj.get('display_text_range', (None, None))
-        return text, display_range
+        return cls._sanitise_string(text), display_range
 
     @staticmethod
     def _get_coordinates(coordinates_obj):
@@ -199,10 +204,8 @@ class Exporter:
         try:
             (ret,), = self.session.query(exists().where(Tweet.tweet_id == tweet_id))
         except Exception:
-            click.echo(json.dumps(tweet_obj, indent=2), err=True)
-            click.echo(f'{tweet_id}', err=True)
-            click.echo(f'{raw_file}:{line}', err=True)
-            # raise
+            click.echo(f'Error ingesting {raw_file}:{line}', err=True)
+            raise
         if ret or tweet_id in self.tweet_id_buffer:
             self.stats['skipped_tweets'] += 1
             return
@@ -360,7 +363,7 @@ class Exporter:
             endpoint=endpoint,
             capture_date=capture_date,
             location=user_obj['location'],
-            description=user_obj['description'],
+            description=self._sanitise_string(user_obj['description']),
             url=user_obj['url'],
             protected=user_obj['protected'],
             followers_count=user_obj['followers_count'],
