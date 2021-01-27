@@ -509,7 +509,13 @@ class Exporter:
                         capture_date=mtime
                     )
 
-            self.session.commit()
+            try:
+                self.session.commit()
+            except Exception:
+                self.session.rollback()
+                raise
+
+        self.session.close()
 
         formatter = {
             'type': f'{self._export_type.value}',
