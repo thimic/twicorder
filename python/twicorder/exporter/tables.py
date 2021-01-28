@@ -194,7 +194,7 @@ class Media(Base):
     media_id = Column(BigInteger, index=True)
     media_url = Column(String(2048))
     url = Column(String(512), index=True)
-    expanded_url = Column(String(2048))
+    expanded_url = Column(String(8192))
     media_type = Column(String(16), index=True)
     display_start = Column(SmallInteger)
     display_end = Column(SmallInteger)
@@ -214,7 +214,7 @@ class Url(Base):
     url_id = Column(Integer, primary_key=True)
 
     url = Column(String(512), index=True)
-    expanded_url = Column(String(2048))
+    expanded_url = Column(String(8192))
     display_start = Column(SmallInteger)
     display_end = Column(SmallInteger)
     # tweet_id = Column(BigInteger, ForeignKey('tweets.tweet_id'))
